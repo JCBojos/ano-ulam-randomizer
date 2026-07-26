@@ -1,0 +1,4773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Ano Ulam? — Turo-Turo Randomizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep: #17271c;
+    --bg-deep2: #1f3324;
+    --paper: #fbf6e7;
+    --paper-shadow: #e8dfc4;
+    --ink: #2b1b12;
+    --annatto: #c1440e;
+    --annatto-dark: #93330a;
+    --chili: #a21d1d;
+    --gold: #b3872f;
+    --gold-dim: #8a6a28;
+    --chip-off-bg: rgba(251,246,231,0.06);
+    --chip-off-border: rgba(251,246,231,0.22);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% -10%, #2a4530 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 0%, #24391f 0%, transparent 50%),
+      var(--bg-deep);
+    background-color:var(--bg-deep);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    padding:24px 14px 60px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .app{
+    width:100%;
+    max-width:1400px;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:24px;
+  }
+
+  .col-center{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+
+  .col-list{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+
+  .col-footer{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+
+  /* Tablet and up: category/order-slip/recipe centered on the left track, recipe list on the right */
+  @media (min-width: 760px){
+    .layout{
+      grid-template-columns: 1fr minmax(240px, 300px);
+      align-items:start;
+      gap:32px;
+      justify-content:center;
+    }
+    .col-center{
+      max-width:520px;
+      width:100%;
+      margin:0 auto;
+    }
+    .col-list{
+      position:sticky;
+      top:24px;
+      max-height:calc(100vh - 48px);
+    }
+    .col-footer{
+      grid-column:1;
+      max-width:520px;
+      width:100%;
+      margin:0 auto;
+    }
+  }
+
+  /* Wide desktop: give both columns more breathing room */
+  @media (min-width: 1100px){
+    .layout{
+      grid-template-columns: 640px minmax(280px, 360px);
+      gap:44px;
+    }
+    .col-center{
+      max-width:640px;
+    }
+    .col-footer{
+      max-width:640px;
+    }
+  }
+
+  /* ---- Signboard header ---- */
+  .signboard{
+    text-align:center;
+    padding:22px 14px 20px;
+    margin-bottom:22px;
+    position:relative;
+    border:3px solid var(--gold-dim);
+    border-radius:6px;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 14px),
+      linear-gradient(180deg,#22392a,#1b2e21);
+    box-shadow: inset 0 0 0 1px rgba(179,135,47,0.25), 0 10px 24px rgba(0,0,0,0.35);
+  }
+  .signboard::before, .signboard::after{
+    content:"";
+    position:absolute;
+    width:10px;height:10px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #e2c67a, var(--gold-dim));
+    top:10px;
+    box-shadow:0 60px 0 0 var(--gold-dim);
+  }
+  .signboard::before{left:10px;}
+  .signboard::after{right:10px;}
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    letter-spacing:0.22em;
+    font-size:11px;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    letter-spacing:0.01em;
+    font-size:clamp(30px,9vw,40px);
+    margin:0;
+    color:var(--paper);
+    text-shadow: 2px 2px 0 var(--annatto-dark);
+  }
+  .sub{
+    font-size:13px;
+    color:#cfe0d1;
+    margin:8px 0 0;
+    font-weight:500;
+  }
+
+  /* ---- Category chips ---- */
+  .section-label{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 10px 4px;
+  }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:22px;
+  }
+  .chip{
+    appearance:none;
+    border:1.5px solid var(--chip-off-border);
+    background:var(--chip-off-bg);
+    color:#e9e3cf;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:8px 13px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  .chip:active{transform:scale(0.95);}
+  .chip.active{
+    background:var(--annatto);
+    border-color:var(--annatto);
+    color:#fff8ec;
+    box-shadow:0 3px 10px rgba(193,68,14,0.45);
+  }
+  .chip:focus-visible{outline:2px solid #e9c877; outline-offset:2px;}
+
+  /* ---- Serve button ---- */
+  .serve-wrap{
+    display:flex;
+    justify-content:center;
+    margin:8px 0 28px;
+  }
+  .serve-btn{
+    font-family:'Anton',sans-serif;
+    font-size:22px;
+    letter-spacing:0.03em;
+    color:#fff3e2;
+    background: linear-gradient(180deg,#d9531a,var(--annatto) 55%, var(--annatto-dark));
+    border:none;
+    border-radius:100px;
+    padding:18px 46px;
+    cursor:pointer;
+    box-shadow: 0 6px 0 var(--annatto-dark), 0 14px 26px rgba(0,0,0,0.4);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .serve-btn:active{
+    transform:translateY(5px);
+    box-shadow:0 1px 0 var(--annatto-dark), 0 6px 14px rgba(0,0,0,0.35);
+  }
+  .serve-btn:disabled{opacity:0.7; cursor:default;}
+  .serve-btn:focus-visible{outline:2px solid #fff3e2; outline-offset:3px;}
+
+  /* ---- Order slip / ticket ---- */
+  .slot{
+    background: linear-gradient(180deg,#0e1b12,#132419);
+    border-radius:10px 10px 4px 4px;
+    padding:10px 10px 0;
+    box-shadow: inset 0 6px 14px rgba(0,0,0,0.55);
+    min-height:8px;
+    margin-bottom:18px;
+  }
+
+  .ticket-stage{
+    perspective: 800px;
+    min-height: 250px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding-top:2px;
+  }
+
+  .ticket{
+    width:100%;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:2px 2px 10px 10px;
+    padding:20px 20px 26px;
+    position:relative;
+    box-shadow: 0 16px 26px rgba(0,0,0,0.35), 0 2px 0 var(--paper-shadow);
+    transform-origin:top center;
+    animation: dispense .55s cubic-bezier(.2,.9,.25,1) both;
+  }
+  .ticket.placeholder{
+    animation:none;
+    text-align:center;
+    color:#8a7a5f;
+    padding:40px 20px;
+  }
+  .ticket.placeholder .ph-emoji{font-size:30px; display:block; margin-bottom:10px;}
+  .ticket.placeholder .ph-text{font-family:'Space Mono',monospace; font-size:13px; line-height:1.6;}
+
+  @keyframes dispense{
+    0%{ transform: translateY(-60%) rotateX(-25deg); opacity:0; }
+    60%{ transform: translateY(4%) rotateX(4deg); opacity:1;}
+    100%{ transform: translateY(0) rotateX(0deg); opacity:1;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticket{animation:none;}
+  }
+
+  .ticket::before{
+    content:"";
+    position:absolute;
+    top:-1px; left:0; right:0;
+    height:14px;
+    background:
+      radial-gradient(circle at 8px 0, transparent 7px, var(--paper) 7px) 0 -7px / 16px 14px repeat-x;
+  }
+
+  .tk-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    color:#7a6b4c;
+    text-transform:uppercase;
+    margin-top:6px;
+  }
+  .tk-cat{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--chili);
+    margin:16px 0 4px;
+    font-weight:700;
+  }
+  .tk-dish{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:clamp(28px,8.4vw,36px);
+    line-height:1.08;
+    margin:2px 0 14px;
+    word-break:break-word;
+  }
+  .tk-line{
+    border:none;
+    border-top:1.5px dashed #cfc3a0;
+    margin:14px 0;
+  }
+  .tk-note{
+    font-family:'Space Mono',monospace;
+    font-size:12.5px;
+    color:#5b4c34;
+    font-style:italic;
+  }
+  .tk-footer{
+    display:flex;
+    justify-content:space-between;
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    color:#9a8b6a;
+    margin-top:14px;
+    letter-spacing:0.04em;
+  }
+
+  .tk-recipe-btn{
+    appearance:none;
+    width:100%;
+    margin-top:6px;
+    padding:11px 14px;
+    border-radius:8px;
+    border:1.5px dashed var(--gold-dim);
+    background:rgba(193,68,14,0.06);
+    color:var(--annatto-dark);
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .tk-recipe-btn:hover{ background:rgba(193,68,14,0.12); }
+  .tk-recipe-btn:active{ transform:scale(0.98); }
+  .tk-recipe-btn:focus-visible{ outline:2px solid var(--chili); outline-offset:2px; }
+
+  .recipe-wrap{ margin-top:0; }
+
+  .recipe-card{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:10px;
+    padding:22px 22px 24px;
+    margin-top:16px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    animation: dispense .45s cubic-bezier(.2,.9,.25,1) both;
+  }
+  @media (prefers-reduced-motion: reduce){ .recipe-card{ animation:none; } }
+
+  .recipe-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:10px;
+    margin-bottom:14px;
+  }
+  .recipe-head h2{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:clamp(20px,4.5vw,26px);
+    margin:0;
+  }
+  .recipe-close{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color:#8a7a5f;
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.05em;
+    cursor:pointer;
+    text-transform:uppercase;
+    padding:4px 6px;
+    flex-shrink:0;
+  }
+  .recipe-close:hover{ color:var(--chili); }
+  .recipe-close:focus-visible{ outline:2px solid var(--chili); }
+
+  .recipe-section-title{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--chili);
+    margin:0 0 8px;
+  }
+  .recipe-ingredients{
+    margin:0 0 18px;
+    padding-left:20px;
+    font-size:14px;
+    line-height:1.7;
+  }
+  .recipe-steps{
+    margin:0;
+    padding-left:20px;
+    font-size:14px;
+    line-height:1.75;
+  }
+  .recipe-steps li{ margin-bottom:8px; }
+  .recipe-fallback-note{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:#8a7a5f;
+    background:rgba(193,68,14,0.08);
+    border:1px solid rgba(193,68,14,0.25);
+    border-radius:6px;
+    padding:8px 10px;
+    margin:0 0 14px;
+  }
+
+  /* rolling name flicker while "cooking" */
+  .rolling{
+    font-family:'Anton',sans-serif;
+    font-size:clamp(24px,7.5vw,32px);
+    text-align:center;
+    color:#8a7a5f;
+    padding:70px 10px;
+  }
+
+  /* ---- history ---- */
+  .history{
+    margin-top:8px;
+  }
+  .history ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .history li{
+    font-family:'Space Mono',monospace;
+    font-size:12.5px;
+    color:#cfe0d1;
+    background:rgba(251,246,231,0.05);
+    border:1px solid rgba(251,246,231,0.1);
+    border-radius:6px;
+    padding:7px 10px;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .history li span.dish{color:#fbf6e7; font-weight:700;}
+  .history li span.tag{color:var(--gold); text-align:right;}
+
+  .history-hint{
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    color:#5f7864;
+    margin:-4px 0 8px 4px;
+  }
+
+  .history-item{
+    appearance:none;
+    display:flex;
+    width:100%;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    text-align:left;
+    font-family:'Space Mono',monospace;
+    font-size:12.5px;
+    color:#cfe0d1;
+    background:rgba(251,246,231,0.05);
+    border:1px solid rgba(251,246,231,0.1);
+    border-radius:6px;
+    padding:7px 10px;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, transform .08s ease;
+  }
+  .history-item:hover{
+    background:rgba(251,246,231,0.1);
+    border-color:rgba(179,135,47,0.4);
+  }
+  .history-item:active{transform:scale(0.98);}
+  .history-item:focus-visible{outline:2px solid #e9c877; outline-offset:2px;}
+  .history-item span.dish{color:#fbf6e7; font-weight:700;}
+  .history-item span.tag{color:var(--gold); text-align:right; white-space:nowrap;}
+
+  /* ---- language switcher ---- */
+  .lang-switch{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:14px;
+  }
+  .lang-btn{
+    appearance:none;
+    border:1.5px solid var(--chip-off-border);
+    background:var(--chip-off-bg);
+    color:#e9e3cf;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:0.06em;
+    padding:6px 12px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .lang-btn.active{
+    background:var(--gold-dim);
+    border-color:var(--gold-dim);
+    color:#1b2e21;
+  }
+  .lang-btn:focus-visible{outline:2px solid #e9c877; outline-offset:2px;}
+
+  .footnote{
+    text-align:center;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:#5f7864;
+    margin-top:26px;
+    line-height:1.6;
+  }
+
+  .copyright{
+    text-align:center;
+    font-family:'Space Mono',monospace;
+    font-size:10px;
+    color:#4a5c50;
+    margin-top:10px;
+    letter-spacing:0.02em;
+  }
+
+  .recipe-search{
+    width:100%;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:9px 12px;
+    margin-bottom:12px;
+    border-radius:8px;
+    border:1.5px solid var(--chip-off-border);
+    background:var(--chip-off-bg);
+    color:var(--paper);
+  }
+  .recipe-search::placeholder{ color:#9aab9d; }
+  .recipe-search:focus-visible{ outline:2px solid #e9c877; outline-offset:1px; }
+
+  .recipe-list-scroll{
+    overflow-y:auto;
+    max-height:60vh;
+    padding-right:4px;
+  }
+  @media (min-width:760px){
+    .recipe-list-scroll{ max-height:calc(100vh - 140px); }
+  }
+
+  .recipe-list-cat{
+    font-family:'Space Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:14px 0 6px;
+  }
+  .recipe-list-cat:first-child{ margin-top:0; }
+
+  .recipe-list-item{
+    display:block;
+    width:100%;
+    text-align:left;
+    appearance:none;
+    border:none;
+    background:none;
+    color:#e9e3cf;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:6px 8px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .12s ease, color .12s ease;
+  }
+  .recipe-list-item:hover{
+    background:rgba(251,246,231,0.08);
+  }
+  .recipe-list-item:focus-visible{
+    outline:2px solid #e9c877;
+    outline-offset:1px;
+  }
+  .recipe-list-item.no-recipe{
+    color:#7a8a7d;
+    cursor:default;
+  }
+  .recipe-list-item.no-recipe:hover{ background:none; }
+  .recipe-list-empty{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    color:#8a7a5f;
+    padding:10px 4px;
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0 0 0 0); white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="signboard">
+    <p class="eyebrow" id="eyebrowText">Turo-Turo Random Order</p>
+    <h1>ANO ULAM?</h1>
+    <p class="sub" id="subText">Pindutin. Ihain. Kainan na.</p>
+    <div class="lang-switch" role="group" aria-label="Language / Wika / Pinulongan" id="langSwitch">
+      <button type="button" class="lang-btn" data-lang="en">EN</button>
+      <button type="button" class="lang-btn" data-lang="tl">TL</button>
+      <button type="button" class="lang-btn" data-lang="bis">BIS</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="col-center">
+      <p class="section-label" id="chips-label">Piliin ang kategorya (opsyonal)</p>
+      <div class="chips" role="group" aria-labelledby="chips-label" id="chipRow"></div>
+
+      <div class="serve-wrap">
+        <button class="serve-btn" id="serveBtn" type="button">IHAIN! 🔔</button>
+      </div>
+
+      <div class="slot">
+        <div class="ticket-stage" id="ticketStage" aria-live="polite">
+          <div class="ticket placeholder">
+            <span class="ph-emoji">🧾</span>
+            <span class="ph-text" id="placeholderText">Wala pang order.<br>Pindutin ang IHAIN! para makakuha<br>ng random na ulam.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="recipe-wrap" id="recipeWrap"></div>
+
+      <div class="history" id="historyWrap" style="display:none;">
+        <p class="section-label" id="historyLabel">Nakaraang mga order</p>
+        <p class="history-hint" id="historyHint">Pindutin ang order para tingnan muli</p>
+        <ul id="historyList"></ul>
+      </div>
+
+    </div>
+
+    <div class="col-list">
+      <p class="section-label" id="recipeListLabel">Listahan ng mga Recipe</p>
+      <input type="search" class="recipe-search" id="recipeSearch" placeholder="Search...">
+      <div class="recipe-list-scroll" id="recipeListWrap"></div>
+    </div>
+
+    <div class="col-footer">
+      <p class="footnote" id="footnoteText">Isang lutong-bahay randomizer para sa "ano ulam"<br>na tanong na 'yan araw-araw. 🍚</p>
+      <p class="copyright" id="copyrightText"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  "🍲 Soups & Sabaw": ["Tinolang Manok","Tinolang Isda","Tinolang Tahong","Sinigang na Baboy","Sinigang na Hipon","Sinigang na Isda","Sinigang na Bangus","Sinigang na Salmon","Sinigang na Manok","Sinigang na Baka","Sinigang na Hipon sa Miso","Nilagang Baboy","Nilagang Baka","Nilagang Manok","Bulalo","Batchoy","La Paz Batchoy","Mami","Arroz Caldo","Lugaw","Goto","Kansi","Pesang Isda","Pesang Manok"],
+  "🐟 Fish & Seafood": ["Inun-unan","Paksiw na Isda","Paksiw na Bangus","Paksiw na Galunggong","Paksiw na Lechon","Daing na Isda","Daing na Bangus","Tuyo","Tinapa","Sinaing na Isda","Sarciadong Isda","Escabeche","Rellenong Bangus","Bangus Belly","Ginataang Isda","Ginataang Tilapia","Ginataang Tambakol","Ginataang Tulingan","Ginataang Alimasag","Ginataang Hipon","Camaron Rebosado","Halabos na Hipon","Sinugba nga Isda","Inihaw na Bangus","Inihaw na Pusit","Inihaw na Tahong","Adobong Pusit","Calamares","Kilawin na Isda","Kinilaw na Tuna","Kinilaw na Tanigue"],
+  "🍗 Chicken Dishes": ["Adobong Manok","Tinolang Manok","Sinigang na Manok","Afritadang Manok","Calderetang Manok","Menudong Manok","Ginataang Manok","Chicken Binakol","Chicken Inasal","Lechon Manok","Inihaw na Manok","Fried Chicken","Chicken BBQ","Chicken Pastel","Chicken Sotanghon","Chicken Macaroni Soup","Chicken Curry Filipino Style","Pininyahang Manok","Halang-halang na Manok","Sinampalukang Manok","Pesang Manok"],
+  "🐖 Pork Dishes": ["Adobong Baboy","Adobong Manok at Baboy","Sinigang na Baboy","Nilagang Baboy","Lechon","Lechon Kawali","Crispy Pata","Dinuguan","Bicol Express","Binagoongan","Pork Steak","Pork Tocino","Longganisa","Hamonado","Estofado","Afritada","Menudo","Caldereta","Igado","Sisig","Paksiw na Lechon","Pata Tim","Humba","Sweet and Sour Pork","Pork BBQ","Inihaw na Liempo","Sinugba nga Baboy","Kinamunggayan","Linat-ang Baboy","Humba Bisaya","Balbacoa"],
+  "🥩 Beef Dishes": ["Beef Steak / Bistek Tagalog","Beef Caldereta","Beef Mechado","Beef Morcon","Beef Afritada","Beef Pares","Nilagang Baka","Bulalo","Kare-Kare","Beef Tapa","Beef Salpicao","Beef with Mushroom","Beef Sinigang","Beef Pares Mami","Kansi","Kinilaw na Baka","Balbacoa","Lengua","Lengua Estofado","Bulanglang na Baka"],
+  "🥬 Vegetable Dishes": ["Pinakbet","Pakbet Ilocano","Dinengdeng","Bulanglang","Law-oy","Laswa","Laing","Ginisang Ampalaya","Ginisang Sayote","Ginisang Upo","Ginisang Pechay","Ginisang Monggo","Ginisang Togue","Ginisang Repolyo","Ginisang Sitaw","Ginisang Talong","Tortang Talong","Ensaladang Talong","Ensaladang Pipino","Chopsuey","Adobong Kangkong","Adobong Sitaw","Ginataang Kalabasa at Sitaw","Ginataang Langka","Ginataang Gulay","Paksiw na Gulay","Crispy Kangkong","Ukoy","Lumpiang Gulay"],
+  "🥥 Ginataan / Coconut Milk": ["Ginataang Kalabasa at Sitaw","Ginataang Langka","Ginataang Gulay","Ginataang Manok","Ginataang Isda","Ginataang Hipon","Ginataang Tilapia","Ginataang Tulingan","Ginataang Tambakol","Laing","Bicol Express","Ginataang Kuhol","Ginataang Alimasag","Ginataang Puso ng Saging","Ginataang Mais"],
+  "🍳 Egg & Quick Ulam": ["Tortang Talong","Tortang Giniling","Tortang Sardinas","Tortang Dulong","Ginisang Itlog","Scrambled Egg with Tomatoes","Itlog na Maalat with Kamatis","Sardinas with Egg","Sardinas with Misua","Corned Beef with Egg","Hotdog with Egg","Tocino with Egg","Longganisa with Egg","Tapa with Egg","Daing na Bangus with Egg"],
+  "🍜 Noodles / Pancit": ["Pancit Canton","Pancit Bihon","Pancit Palabok","Pancit Malabon","Pancit Luglug","Pancit Batil Patung","Pancit Habhab","Pancit Miki","Pancit Sotanghon","Pancit Lomi","Batchoy","La Paz Batchoy","Kinalas","Miki-Bihon","Bam-i","Misua with Patola","Misua with Sardines"],
+  "🍢 Grilled & Street-Style": ["Isaw Manok","Isaw Baboy","Betamax","Adidas","Helmet","Chicken BBQ","Pork BBQ","Inihaw na Liempo","Inihaw na Manok","Inihaw na Bangus","Inihaw na Pusit","Inihaw na Tahong","Isdang Sinugba","Sinugba nga Baboy","Sinugba nga Manok","Sari-Saring Inihaw"],
+  "🥟 Fried & Crispy": ["Lumpiang Shanghai","Lumpiang Gulay","Lumpiang Sariwa","Lumpiang Togue","Lumpiang Prito","Fried Bangus","Fried Galunggong","Fried Tilapia","Fried Chicken","Crispy Pata","Lechon Kawali","Chicharon","Tokwa't Baboy","Calamares","Camaron Rebosado","Ukoy","Dynamite Lumpia"],
+  "🌴 Visayan / Bisaya": ["Inun-unan","Sinugba","Linat-ang Isda","Linat-ang Baboy","Linat-ang Baka","Law-oy","Humba","Humba Bisaya","Kinilaw","Sinuglaw","Paksiw na Isda","Tinunu-ang Isda","Suam na Mais","Utan Bisaya","Ginamos","Tuslob-Buwa","Puso ng Saging nga Ginat-an","Bam-i","Ngohiong","Chorizo de Cebu","Lechon Cebu","Balbacoa","Kansi"],
+  "🍚 Other Classic Pinoy Ulam": ["Adobo","Kare-Kare","Menudo","Afritada","Mechado","Caldereta","Embutido","Morcon","Dinuguan","Sisig","Bopis","Igado","Paksiw","Estofado","Humba","Bistek Tagalog","Tokwa't Baboy","Chopsuey","Pinakbet","Laing","Bicol Express","Batchoy","Arroz Caldo"]
+};
+
+const RECIPES = {
+  "Tinolang Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "ginger, sliced",
+        "1 onion",
+        "green papaya or chayote, sliced",
+        "malunggay or spinach leaves",
+        "fish sauce, fish sauce to taste"
+      ],
+      "steps": [
+        "Saute ginger, onion and chicken in a little oil until chicken browns lightly.",
+        "Pour in water, bring to a boil, then simmer until chicken is tender.",
+        "Add papaya, season with fish sauce, and finish with malunggay leaves just before serving."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "1 kg manok, hiniwa-hiwa",
+        "luya, hiniwa",
+        "1 sibuyas",
+        "green papaya o sayote, hiniwa",
+        "dahon ng malunggay o spinach",
+        "patis, ayon sa panlasa"
+      ],
+      "steps": [
+        "Igisa ang luya, sibuyas, at manok sa kaunting mantika hanggang bahagyang mamula ang manok.",
+        "Lagyan ng tubig, pakuluan, pagkatapos ay pakuluin nang mahinang apoy hanggang lumambot ang manok.",
+        "Idagdag ang papaya, timplahan ng patis, at tapusin ng dahon ng malunggay bago ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "1 kg manok, gitasak-tasak",
+        "luy-a, gitadtad",
+        "1 sibuyas",
+        "hilaw nga kapayas o sayote, gitadtad",
+        "dahon sa malunggay o spinach",
+        "patis, sumala sa lami"
+      ],
+      "steps": [
+        "I-guisa ang luy-a, sibuyas, ug manok sa gamay nga mantika hangtod mamula ang manok.",
+        "Sudlan ug tubig, pabukala, dayon pahinaya og kalayo hangtod molumo ang manok.",
+        "Idugang ang kapayas, timplahi ug patis, ug tapuson ug dahon sa malunggay una ihatag."
+      ]
+    }
+  },
+  "Tinolang Isda": {
+    "en": {
+      "ingredients": [
+        "1 whole fish (bangus or tilapia)",
+        "ginger, sliced",
+        "tomatoes, quartered",
+        "green papaya, sliced",
+        "spinach or kangkong leaves",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute ginger and tomatoes, then pour in water and bring to a boil.",
+        "Season with fish sauce and add papaya; simmer until tender.",
+        "Add the fish and cook gently until just done, then stir in leafy greens."
+      ]
+    }
+  },
+  "Tinolang Tahong": {
+    "en": {
+      "ingredients": [
+        "1 kg mussels, cleaned",
+        "ginger, sliced",
+        "lemongrass, tied",
+        "spinach leaves",
+        "patis (fish sauce)"
+      ],
+      "steps": [
+        "Boil water with ginger and lemongrass for a few minutes.",
+        "Add mussels and cook until shells open.",
+        "Season with fish sauce and finish with spinach leaves."
+      ]
+    }
+  },
+  "Sinigang na Baboy": {
+    "en": {
+      "ingredients": [
+        "1 kg pork ribs or belly, cubed",
+        "tamarind sinigang mix or fresh tamarind",
+        "radish, sliced",
+        "tomatoes, kangkong, string beans",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer pork in water with onion and tomatoes until tender.",
+        "Add radish and beans, then season with tamarind/sinigang mix and fish sauce.",
+        "Adjust sourness to taste, add kangkong last, and simmer briefly before serving."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "1 kg tadyang o liyempo ng baboy, kinuwadro",
+        "sinigang mix na sampalok o sariwang sampalok",
+        "labanos, hiniwa",
+        "kamatis, kangkong, sitaw",
+        "sibuyas",
+        "patis"
+      ],
+      "steps": [
+        "Pakuluan ang baboy sa tubig kasama ang sibuyas at kamatis hanggang lumambot.",
+        "Idagdag ang labanos at sitaw, pagkatapos ay timplahan ng sinigang mix at patis.",
+        "Ayusin ang asim ayon sa panlasa, idagdag ang kangkong sa huli, at pakuluin ng saglit bago ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "1 kg tadyang o liyempo sa baboy, gikuwadro",
+        "sinigang mix nga sampalok o lab-as nga sampalok",
+        "labanos, gitadtad",
+        "kamatis, kangkong, batong",
+        "sibuyas",
+        "patis"
+      ],
+      "steps": [
+        "Pabukala ang baboy sa tubig uban ang sibuyas ug kamatis hangtod molumo.",
+        "Idugang ang labanos ug batong, dayon timplahi ug sinigang mix ug patis.",
+        "Ayoha ang kaaslom sumala sa lami, idugang ang kangkong sa katapusan, ug pabukala og gamay una ihatag."
+      ]
+    }
+  },
+  "Sinigang na Hipon": {
+    "en": {
+      "ingredients": [
+        "1 kg shrimp",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Boil water with tomatoes, onion, radish and beans until vegetables soften.",
+        "Season with tamarind mix and fish sauce to taste.",
+        "Add shrimp and kangkong, simmer just until shrimp turns pink, then serve."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "1 kg hipon",
+        "sinigang mix na sampalok",
+        "labanos, kamatis, sitaw, kangkong",
+        "sibuyas",
+        "patis"
+      ],
+      "steps": [
+        "Pakuluan ang tubig kasama ang kamatis, sibuyas, labanos at sitaw hanggang lumambot ang mga gulay.",
+        "Timplahan ng sinigang mix at patis ayon sa panlasa.",
+        "Idagdag ang hipon at kangkong, pakuluin hanggang mamula ang hipon, pagkatapos ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "1 kg sud-an nga hipon",
+        "sinigang mix nga sampalok",
+        "labanos, kamatis, batong, kangkong",
+        "sibuyas",
+        "patis"
+      ],
+      "steps": [
+        "Pabukala ang tubig uban ang kamatis, sibuyas, labanos ug batong hangtod molumo ang mga utanon.",
+        "Timplahi ug sinigang mix ug patis sumala sa lami.",
+        "Idugang ang hipon ug kangkong, pabukala hangtod mopula ang hipon, dayon ihatag."
+      ]
+    }
+  },
+  "Sinigang na Isda": {
+    "en": {
+      "ingredients": [
+        "1 whole fish (bangus, maya-maya, or similar)",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer aromatics and vegetables in water until tender.",
+        "Add sinigang mix and fish sauce, adjusting sourness to taste.",
+        "Gently add fish and cook until just done; finish with kangkong."
+      ]
+    }
+  },
+  "Sinigang na Bangus": {
+    "en": {
+      "ingredients": [
+        "1 whole milkfish (bangus), sliced",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer vegetables and aromatics until tender.",
+        "Season broth with sinigang mix and fish sauce.",
+        "Add bangus slices and simmer gently until cooked; finish with kangkong."
+      ]
+    }
+  },
+  "Sinigang na Salmon": {
+    "en": {
+      "ingredients": [
+        "salmon belly or steaks",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Bring aromatics and vegetables to a simmer in water.",
+        "Season with sinigang mix and fish sauce to taste.",
+        "Add salmon last and simmer briefly so it stays tender; add kangkong at the end."
+      ]
+    }
+  },
+  "Sinigang na Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer chicken with onion and tomatoes until nearly tender.",
+        "Add radish and beans, then season with sinigang mix and fish sauce.",
+        "Finish with kangkong just before serving."
+      ]
+    }
+  },
+  "Sinigang na Baka": {
+    "en": {
+      "ingredients": [
+        "1 kg beef short ribs or shank",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer beef slowly in water with onion until fork-tender (this takes the longest of the sinigang variants).",
+        "Add radish and beans, then season with sinigang mix and fish sauce.",
+        "Finish with kangkong and serve piping hot."
+      ]
+    }
+  },
+  "Sinigang na Hipon sa Miso": {
+    "en": {
+      "ingredients": [
+        "shrimp",
+        "white miso paste",
+        "tamarind sinigang mix (light)",
+        "radish, tomatoes, kangkong",
+        "onion"
+      ],
+      "steps": [
+        "Simmer aromatics and vegetables in water.",
+        "Stir in miso paste and a touch of tamarind for a rounded sour-savory broth.",
+        "Add shrimp and kangkong, cooking briefly until shrimp is done."
+      ]
+    }
+  },
+  "Nilagang Baboy": {
+    "en": {
+      "ingredients": [
+        "1 kg pork ribs or bone-in pork",
+        "cabbage, potatoes, corn on the cob",
+        "onion, peppercorns",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer pork with onion and peppercorns in water until tender, skimming impurities.",
+        "Add potatoes and corn, cooking until soft.",
+        "Add cabbage last, season with fish sauce, and serve hot with the broth."
+      ]
+    }
+  },
+  "Nilagang Baka": {
+    "en": {
+      "ingredients": [
+        "beef shank or short ribs",
+        "cabbage, potatoes, corn, plantain",
+        "onion, peppercorns",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer beef slowly with onion and peppercorns until very tender, skimming impurities.",
+        "Add potatoes, plantain and corn, cooking until soft.",
+        "Add cabbage last, season with fish sauce, and serve."
+      ]
+    }
+  },
+  "Nilagang Manok": {
+    "en": {
+      "ingredients": [
+        "1 whole chicken, cut up",
+        "cabbage, potatoes, corn",
+        "onion, peppercorns",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer chicken with onion and peppercorns until tender.",
+        "Add potatoes and corn, cooking until soft.",
+        "Add cabbage last and season with fish sauce before serving."
+      ]
+    }
+  },
+  "Bulalo": {
+    "en": {
+      "ingredients": [
+        "beef shank with marrow bone",
+        "corn, cabbage, potatoes",
+        "onion, peppercorns",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer the beef shank slowly for a couple of hours until tender and the marrow softens.",
+        "Add corn and potatoes, cooking until soft.",
+        "Add cabbage near the end, season with fish sauce, and serve hot."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "kamto ng baka na may utak-utak",
+        "mais, repolyo, patatas",
+        "sibuyas, paminta",
+        "patis"
+      ],
+      "steps": [
+        "Pakuluan nang mahinay ang kamto ng baka sa loob ng ilang oras hanggang lumambot at lumambot ang utak-utak.",
+        "Idagdag ang mais at patatas, lutuin hanggang lumambot.",
+        "Idagdag ang repolyo bago matapos, timplahan ng patis, at ihain nang mainit."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "bitiis sa baka nga adunay utok-utok",
+        "mais, repolyo, patatas",
+        "sibuyas, paminta",
+        "patis"
+      ],
+      "steps": [
+        "Pabukala og hinay ang bitiis sa baka sulod sa pipila ka oras hangtod molumo ug molumo ang utok-utok.",
+        "Idugang ang mais ug patatas, lutoa hangtod molumo.",
+        "Idugang ang repolyo sa dili pa mahuman, timplahi ug patis, ug ihatag samtang init."
+      ]
+    }
+  },
+  "Batchoy": {
+    "en": {
+      "ingredients": [
+        "pork offal (liver, intestines) and pork meat, sliced",
+        "miki noodles",
+        "garlic, toasted",
+        "chicharon (pork cracklings), crushed",
+        "beef or pork stock",
+        "green onions"
+      ],
+      "steps": [
+        "Simmer pork meat and offal in stock until tender, then slice thinly.",
+        "Cook miki noodles separately and place in a bowl with hot broth.",
+        "Top with the meat, toasted garlic, crushed chicharon and green onions before serving."
+      ]
+    }
+  },
+  "La Paz Batchoy": {
+    "en": {
+      "ingredients": [
+        "pork offal and pork meat, sliced",
+        "miki noodles",
+        "garlic, toasted",
+        "chicharon, crushed",
+        "pork or beef stock",
+        "raw egg (optional)"
+      ],
+      "steps": [
+        "Prepare a rich pork stock and simmer offal and meat until tender.",
+        "Blanch miki noodles and place in a bowl.",
+        "Pour hot broth over noodles, top with meat, offal, toasted garlic and chicharon; crack an egg on top if desired."
+      ]
+    }
+  },
+  "Mami": {
+    "en": {
+      "ingredients": [
+        "egg noodles (miki)",
+        "beef or chicken, sliced or shredded",
+        "beef/chicken stock",
+        "garlic, toasted",
+        "green onions, calamansi"
+      ],
+      "steps": [
+        "Simmer meat in stock with aromatics until tender, then shred or slice.",
+        "Cook noodles separately until tender.",
+        "Combine noodles and broth in a bowl, top with meat, toasted garlic and green onions, and serve with calamansi."
+      ]
+    }
+  },
+  "Arroz Caldo": {
+    "en": {
+      "ingredients": [
+        "1 whole chicken, cut up",
+        "glutinous rice mixed with regular rice",
+        "ginger, garlic, onion",
+        "fish sauce, safflower (kasubha) or turmeric for color",
+        "toasted garlic, green onions, calamansi, hard-boiled egg for topping"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add chicken and cook until lightly browned.",
+        "Add rice and water, simmering and stirring occasionally until porridge-like and chicken is tender.",
+        "Season with fish sauce and serve topped with toasted garlic, green onions, calamansi and egg."
+      ]
+    }
+  },
+  "Lugaw": {
+    "en": {
+      "ingredients": [
+        "rice",
+        "water or chicken stock",
+        "ginger, garlic, onion",
+        "fish sauce",
+        "toasted garlic, green onions for topping"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion in a pot.",
+        "Add rice and water/stock, simmering low and stirring often until thick and creamy.",
+        "Season with fish sauce and top with toasted garlic and green onions."
+      ]
+    }
+  },
+  "Goto": {
+    "en": {
+      "ingredients": [
+        "beef tripe (goto), cleaned and cubed",
+        "glutinous rice mixed with regular rice",
+        "ginger, garlic, onion",
+        "fish sauce",
+        "toasted garlic, green onions, calamansi"
+      ],
+      "steps": [
+        "Simmer tripe until very tender (this can take over an hour); reserve the cooking liquid.",
+        "Saute ginger, garlic, onion, then add rice and the tripe cooking liquid, simmering until porridge-like.",
+        "Return tripe to the pot, season with fish sauce, and top with toasted garlic and green onions."
+      ]
+    }
+  },
+  "Kansi": {
+    "en": {
+      "ingredients": [
+        "beef shank with marrow",
+        "batwan fruit or tamarind",
+        "lemongrass, onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer beef shank slowly with lemongrass and onion until tender.",
+        "Add batwan or tamarind for sourness, simmering further.",
+        "Season with fish sauce and serve hot."
+      ]
+    }
+  },
+  "Pesang Isda": {
+    "en": {
+      "ingredients": [
+        "1 whole fish (bangus or similar)",
+        "napa cabbage or pechay",
+        "ginger, onion",
+        "patis (fish sauce)",
+        "miso (optional) for extra depth"
+      ],
+      "steps": [
+        "Simmer ginger and onion in water to build a light broth.",
+        "Add fish and simmer gently until just cooked.",
+        "Add cabbage or pechay, season with fish sauce (and miso if using), and serve."
+      ]
+    }
+  },
+  "Pesang Manok": {
+    "en": {
+      "ingredients": [
+        "1 whole chicken, cut up",
+        "napa cabbage or pechay",
+        "ginger, onion",
+        "patis (fish sauce)"
+      ],
+      "steps": [
+        "Simmer chicken with ginger and onion until tender.",
+        "Add cabbage or pechay and cook until wilted.",
+        "Season with fish sauce and serve the light broth alongside the chicken."
+      ]
+    }
+  },
+  "Inun-unan": {
+    "en": {
+      "ingredients": [
+        "fish (galunggong or similar), cleaned",
+        "vinegar",
+        "ginger, garlic, onion",
+        "siling haba (long green chili)",
+        "salt"
+      ],
+      "steps": [
+        "Layer ginger, garlic and onion at the bottom of a pot, then place fish on top.",
+        "Pour in vinegar and a little water, add chili, and bring to a boil uncovered briefly then simmer covered.",
+        "Cook without stirring too much until fish is tender and sauce reduces; season with salt."
+      ]
+    }
+  },
+  "Paksiw na Isda": {
+    "en": {
+      "ingredients": [
+        "fish, cleaned",
+        "vinegar, water",
+        "ginger, garlic",
+        "siling haba",
+        "salt or fish sauce"
+      ],
+      "steps": [
+        "Arrange ginger and garlic in the pot, place fish on top.",
+        "Add vinegar and water, and chili; bring to a boil then simmer without stirring.",
+        "Cook until fish is tender and sauce is slightly reduced; season to taste."
+      ]
+    }
+  },
+  "Paksiw na Bangus": {
+    "en": {
+      "ingredients": [
+        "milkfish (bangus), sliced",
+        "vinegar, water",
+        "ginger, garlic",
+        "siling haba",
+        "salt"
+      ],
+      "steps": [
+        "Arrange ginger and garlic at the bottom of the pan, top with bangus slices.",
+        "Pour vinegar and water over, add chili, bring to a boil, then simmer gently covered.",
+        "Simmer until tender and the sauce thickens slightly."
+      ]
+    }
+  },
+  "Paksiw na Galunggong": {
+    "en": {
+      "ingredients": [
+        "galunggong (mackerel scad), cleaned",
+        "vinegar, water",
+        "ginger, garlic",
+        "siling haba",
+        "salt"
+      ],
+      "steps": [
+        "Layer ginger and garlic in the pot, place fish on top.",
+        "Add vinegar, water, and chili; bring to a boil then reduce to a simmer.",
+        "Cook until fish is tender, without stirring too much, then serve."
+      ]
+    }
+  },
+  "Paksiw na Lechon": {
+    "en": {
+      "ingredients": [
+        "leftover lechon, chopped",
+        "liver sauce or vinegar-based sauce",
+        "garlic, bay leaf",
+        "sugar, pepper"
+      ],
+      "steps": [
+        "Saute garlic, then add chopped lechon.",
+        "Pour in liver sauce or a vinegar-based mixture with bay leaf.",
+        "Simmer until the sauce thickens and coats the meat, then serve."
+      ]
+    }
+  },
+  "Daing na Isda": {
+    "en": {
+      "ingredients": [
+        "fish, butterflied",
+        "vinegar, garlic, salt, pepper marinade",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Marinate fish in vinegar, crushed garlic, salt and pepper for at least an hour (or overnight, salted and dried).",
+        "Pat dry, then fry in hot oil until crisp and golden.",
+        "Serve with vinegar-garlic dip and rice."
+      ]
+    }
+  },
+  "Daing na Bangus": {
+    "en": {
+      "ingredients": [
+        "milkfish (bangus), butterflied and deboned",
+        "vinegar, garlic, salt, pepper marinade",
+        "cooking oil"
+      ],
+      "steps": [
+        "Marinate the bangus in the vinegar-garlic mixture for at least an hour, ideally overnight.",
+        "Pat dry and fry in hot oil, skin-side down first, until crisp and cooked through.",
+        "Serve hot with a vinegar dipping sauce."
+      ]
+    }
+  },
+  "Tuyo": {
+    "en": {
+      "ingredients": [
+        "dried salted fish (tuyo)",
+        "cooking oil"
+      ],
+      "steps": [
+        "Fry the dried fish in hot oil until crisp on both sides.",
+        "Drain on paper towels.",
+        "Serve with fried rice, tomatoes, and a vinegar dip."
+      ]
+    }
+  },
+  "Tinapa": {
+    "en": {
+      "ingredients": [
+        "smoked fish (tinapa)",
+        "cooking oil"
+      ],
+      "steps": [
+        "Lightly fry or grill the smoked fish until heated through and slightly crisp.",
+        "Alternatively, flake and saute with garlic, tomato and egg for tinapa flakes.",
+        "Serve with rice and a vinegar-chili dip."
+      ]
+    }
+  },
+  "Sinaing na Isda": {
+    "en": {
+      "ingredients": [
+        "fish (galunggong or bangus)",
+        "tamarind or kamias for sourness",
+        "salt",
+        "banana leaves to line the pot"
+      ],
+      "steps": [
+        "Line a clay pot or heavy pot with banana leaves and arrange fish.",
+        "Add sour fruit and salt, then pour in a small amount of water.",
+        "Cook over very low heat for a long time until the bones soften and the liquid reduces almost completely."
+      ]
+    }
+  },
+  "Sarciadong Isda": {
+    "en": {
+      "ingredients": [
+        "fried fish",
+        "tomatoes, onion, garlic",
+        "beaten egg",
+        "fish sauce"
+      ],
+      "steps": [
+        "Fry the fish until golden and set aside.",
+        "Saute garlic, onion and tomatoes into a soft sauce, adding a little water.",
+        "Return fish to the pan, pour beaten egg over the sauce, and cook until the egg sets."
+      ]
+    }
+  },
+  "Escabeche": {
+    "en": {
+      "ingredients": [
+        "fried whole fish (lapu-lapu or similar)",
+        "vinegar, sugar, soy sauce",
+        "bell peppers, carrots, onion, ginger, garlic for the sauce",
+        "cornstarch slurry"
+      ],
+      "steps": [
+        "Fry the fish until crisp and set aside.",
+        "Saute garlic, ginger, onion and vegetables, then add vinegar, sugar and soy sauce, simmering to a sweet-sour sauce.",
+        "Thicken with cornstarch slurry and pour over the fried fish before serving."
+      ]
+    }
+  },
+  "Rellenong Bangus": {
+    "en": {
+      "ingredients": [
+        "milkfish (bangus), deboned with skin kept whole",
+        "the flaked bangus meat, mixed with sauteed vegetables, egg",
+        "carrots, raisins, potatoes (optional)",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Carefully debone the bangus, keeping the skin intact as a pocket.",
+        "Mix the flaked meat with sauteed vegetables and egg, then stuff back into the skin, restoring its shape.",
+        "Steam or fry until firm and golden, then slice to serve."
+      ]
+    }
+  },
+  "Bangus Belly": {
+    "en": {
+      "ingredients": [
+        "milkfish belly, sliced",
+        "salt and pepper, or a marinade of soy sauce and calamansi",
+        "cooking oil"
+      ],
+      "steps": [
+        "Marinate the bangus belly briefly in salt, pepper (or soy-calamansi).",
+        "Grill or fry until the fat renders and the edges crisp.",
+        "Serve hot with a vinegar-soy dip."
+      ]
+    }
+  },
+  "Ginataang Isda": {
+    "en": {
+      "ingredients": [
+        "fish, cut into pieces",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "siling haba, kangkong or spinach"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add fish pieces and lightly sear.",
+        "Pour in coconut milk and simmer gently until it thickens slightly.",
+        "Add chili and leafy greens, simmer briefly, and serve."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "isda, hiniwang-hiniwa",
+        "gata",
+        "luya, bawang, sibuyas",
+        "siling haba, kangkong o spinach"
+      ],
+      "steps": [
+        "Igisa ang luya, bawang at sibuyas, pagkatapos idagdag ang isda at bahagyang isaing.",
+        "Ibuhos ang gata at pakuluin nang mahinay hanggang bahagyang lumapot.",
+        "Idagdag ang sili at gulay, pakuluin ng saglit, at ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "isda, gitadtad",
+        "gata",
+        "luy-a, ahos, sibuyas",
+        "siling haba, kangkong o spinach"
+      ],
+      "steps": [
+        "I-guisa ang luy-a, ahos ug sibuyas, dayon idugang ang isda ug pasingawa og gamay.",
+        "Ibubo ang gata ug pabukala og hinay hangtod bahin molapot.",
+        "Idugang ang sili ug utanon, pabukala og gamay, ug ihatag."
+      ]
+    }
+  },
+  "Ginataang Tilapia": {
+    "en": {
+      "ingredients": [
+        "tilapia, cleaned and scored",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "siling haba, kangkong or mustard leaves"
+      ],
+      "steps": [
+        "Saute aromatics, then add tilapia and coconut milk.",
+        "Simmer gently, spooning sauce over the fish, until cooked through.",
+        "Add greens and chili, simmer briefly, then serve."
+      ]
+    }
+  },
+  "Ginataang Tambakol": {
+    "en": {
+      "ingredients": [
+        "tambakol (mackerel tuna), sliced",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "siling haba, kamias or vinegar for a light sour edge"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add fish slices.",
+        "Pour in coconut milk with a splash of sour element, simmering until the fish is cooked and sauce reduces.",
+        "Add chili and simmer briefly before serving."
+      ]
+    }
+  },
+  "Ginataang Tulingan": {
+    "en": {
+      "ingredients": [
+        "tulingan (mackerel tuna), sliced",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "siling haba, kamias"
+      ],
+      "steps": [
+        "Saute aromatics, then add fish.",
+        "Pour in coconut milk and a few slices of kamias for sourness; simmer until thickened.",
+        "Add chili and cook a few more minutes before serving."
+      ]
+    }
+  },
+  "Ginataang Alimasag": {
+    "en": {
+      "ingredients": [
+        "blue crabs (alimasag), cleaned and halved",
+        "coconut milk",
+        "malunggay leaves or chili leaves",
+        "ginger, garlic, onion",
+        "siling haba"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add crab pieces and sear briefly.",
+        "Pour in coconut milk and simmer until the crab is cooked through.",
+        "Add malunggay leaves and chili, simmer briefly, and serve."
+      ]
+    }
+  },
+  "Ginataang Hipon": {
+    "en": {
+      "ingredients": [
+        "shrimp",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "squash or malunggay leaves",
+        "siling haba"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add squash if using and simmer until softening.",
+        "Pour in coconut milk and bring to a gentle simmer.",
+        "Add shrimp and cook just until pink, then add malunggay and chili before serving."
+      ]
+    }
+  },
+  "Camaron Rebosado": {
+    "en": {
+      "ingredients": [
+        "large shrimp, deveined with tails on",
+        "batter of flour, cornstarch, egg and water",
+        "cooking oil for deep frying",
+        "sweet and sour sauce for dipping"
+      ],
+      "steps": [
+        "Dip shrimp into the batter, coating well.",
+        "Deep-fry until golden and crisp.",
+        "Serve hot with sweet and sour dipping sauce."
+      ]
+    }
+  },
+  "Halabos na Hipon": {
+    "en": {
+      "ingredients": [
+        "shrimp, unpeeled",
+        "garlic, sliced",
+        "soda (7-Up or Sprite) or water",
+        "salt"
+      ],
+      "steps": [
+        "Place shrimp in a pot with garlic and a splash of soda or water.",
+        "Cover and steam-boil over medium heat until shrimp turn pink and shells look glossy.",
+        "Season with salt and serve immediately with a vinegar or calamansi dip."
+      ]
+    }
+  },
+  "Sinugba nga Isda": {
+    "en": {
+      "ingredients": [
+        "whole fish",
+        "salt, pepper, calamansi marinade",
+        "banana leaf or foil (optional)"
+      ],
+      "steps": [
+        "Marinate fish briefly in salt, pepper and calamansi.",
+        "Grill over hot charcoal, turning once, until charred and cooked through.",
+        "Serve with a vinegar-soy or spiced vinegar dip."
+      ]
+    }
+  },
+  "Inihaw na Bangus": {
+    "en": {
+      "ingredients": [
+        "milkfish (bangus), butterflied",
+        "salt, pepper, calamansi marinade"
+      ],
+      "steps": [
+        "Marinate the bangus briefly in salt, pepper and calamansi.",
+        "Grill over charcoal, skin-side down first, until cooked through and lightly charred.",
+        "Serve with soy-calamansi dipping sauce."
+      ]
+    }
+  },
+  "Inihaw na Pusit": {
+    "en": {
+      "ingredients": [
+        "squid, cleaned",
+        "salt, pepper, calamansi or a soy marinade",
+        "cooking oil for brushing"
+      ],
+      "steps": [
+        "Marinate the squid briefly (don't overmarinate to avoid toughness).",
+        "Grill quickly over hot charcoal, just until opaque, basting with oil.",
+        "Serve immediately with a vinegar-soy-chili dip."
+      ]
+    }
+  },
+  "Inihaw na Tahong": {
+    "en": {
+      "ingredients": [
+        "mussels, cleaned",
+        "garlic butter or a spiced vinegar for basting"
+      ],
+      "steps": [
+        "Place mussels directly on a hot grill until they open.",
+        "Baste with garlic butter or a savory basting sauce.",
+        "Serve hot with a vinegar dip."
+      ]
+    }
+  },
+  "Adobong Pusit": {
+    "en": {
+      "ingredients": [
+        "squid, cleaned and sliced into rings",
+        "squid ink (optional, for color)",
+        "vinegar, soy sauce, garlic",
+        "bay leaf, pepper"
+      ],
+      "steps": [
+        "Saute garlic, then add squid and cook briefly (squid cooks fast).",
+        "Add vinegar, soy sauce, bay leaf and pepper; simmer briefly.",
+        "If using, stir in squid ink for color and depth, then serve over rice."
+      ]
+    }
+  },
+  "Calamares": {
+    "en": {
+      "ingredients": [
+        "squid, sliced into rings",
+        "flour and cornstarch breading, egg wash",
+        "cooking oil for deep frying"
+      ],
+      "steps": [
+        "Dip squid rings in egg wash, then coat in the seasoned flour-cornstarch mix.",
+        "Deep-fry briefly until golden and crisp (do not overcook to keep it tender).",
+        "Serve hot with a spiced vinegar or aioli dip."
+      ]
+    }
+  },
+  "Kilawin na Isda": {
+    "en": {
+      "ingredients": [
+        "fresh firm white fish, cubed",
+        "vinegar or calamansi juice",
+        "onion, ginger, chili",
+        "salt"
+      ],
+      "steps": [
+        "Marinate fish cubes in vinegar or calamansi juice until the flesh turns opaque.",
+        "Mix in chopped onion, ginger and chili.",
+        "Season with salt to taste and chill briefly before serving."
+      ]
+    }
+  },
+  "Kinilaw na Tuna": {
+    "en": {
+      "ingredients": [
+        "fresh tuna, cubed",
+        "vinegar or calamansi juice",
+        "onion, ginger, chili",
+        "coconut milk (optional, Bisaya-style)",
+        "salt"
+      ],
+      "steps": [
+        "Marinate tuna cubes in vinegar or calamansi until slightly cured.",
+        "Mix in onion, ginger and chili, adding coconut milk for a creamier version if desired.",
+        "Season with salt and serve chilled."
+      ]
+    }
+  },
+  "Kinilaw na Tanigue": {
+    "en": {
+      "ingredients": [
+        "fresh tanigue (Spanish mackerel), cubed",
+        "vinegar or calamansi juice",
+        "onion, ginger, chili",
+        "coconut milk (optional)",
+        "salt"
+      ],
+      "steps": [
+        "Cure the fish cubes in vinegar or calamansi juice.",
+        "Toss with onion, ginger, chili and coconut milk if using.",
+        "Season with salt and chill before serving."
+      ]
+    }
+  },
+  "Adobong Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "soy sauce, vinegar",
+        "garlic, bay leaf, peppercorns",
+        "sugar (optional)"
+      ],
+      "steps": [
+        "Marinate chicken briefly in soy sauce, vinegar, garlic and pepper (or just combine in the pot).",
+        "Simmer covered until chicken is tender, then uncover and reduce the sauce.",
+        "Fry the chicken pieces in the reduced sauce/oil until lightly browned, then return sauce and serve."
+      ]
+    }
+  },
+  "Afritadang Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "tomato sauce",
+        "potatoes, carrots, bell peppers",
+        "garlic, onion",
+        "bay leaf"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown chicken pieces.",
+        "Add tomato sauce and water, and simmer until chicken is tender.",
+        "Add potatoes and carrots, cooking until soft, then finish with bell peppers."
+      ]
+    }
+  },
+  "Calderetang Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "tomato sauce, liver spread",
+        "potatoes, carrots, bell peppers, olives",
+        "garlic, onion",
+        "chili (optional for spicy version)"
+      ],
+      "steps": [
+        "Saute garlic and onion, brown chicken, then add tomato sauce and water.",
+        "Simmer until chicken is tender, then stir in liver spread for richness.",
+        "Add potatoes, carrots and olives, cooking until vegetables are tender, then finish with bell peppers."
+      ]
+    }
+  },
+  "Menudong Manok": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into small pieces",
+        "tomato sauce",
+        "potatoes, carrots",
+        "garlic, onion",
+        "hotdog or liver (optional)"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the chicken pieces.",
+        "Add tomato sauce and water, simmering until chicken is tender.",
+        "Add potatoes and carrots (and hotdog/liver if using), cooking until vegetables soften."
+      ]
+    }
+  },
+  "Ginataang Manok": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "coconut milk",
+        "ginger, garlic, onion",
+        "siling haba, chili leaves or malunggay"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then brown the chicken.",
+        "Pour in coconut milk and simmer until the chicken is tender and sauce thickens.",
+        "Add chili and greens, simmer briefly, then serve."
+      ]
+    }
+  },
+  "Chicken Binakol": {
+    "en": {
+      "ingredients": [
+        "1 kg chicken, cut up",
+        "fresh coconut water and young coconut meat",
+        "ginger, lemongrass, onion",
+        "chili leaves or malunggay",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer chicken in coconut water with ginger, lemongrass and onion until tender.",
+        "Add young coconut meat and simmer a few more minutes.",
+        "Season with fish sauce, add greens, and serve hot."
+      ]
+    }
+  },
+  "Chicken Inasal": {
+    "en": {
+      "ingredients": [
+        "chicken quarters or thighs",
+        "annatto oil (achuete)",
+        "calamansi, lemongrass, ginger, garlic marinade",
+        "salt"
+      ],
+      "steps": [
+        "Marinate chicken overnight in calamansi, lemongrass, ginger, garlic and salt.",
+        "Grill over charcoal, basting frequently with annatto oil, until charred and cooked through.",
+        "Serve with rice, a soy-calamansi dip, and chicken oil drizzle."
+      ]
+    }
+  },
+  "Lechon Manok": {
+    "en": {
+      "ingredients": [
+        "1 whole chicken",
+        "lemongrass, garlic, onion for stuffing",
+        "salt, pepper, calamansi marinade"
+      ],
+      "steps": [
+        "Marinate the chicken and stuff the cavity with lemongrass, garlic and onion.",
+        "Truss and roast (traditionally on a spit) over indirect heat, turning until skin is golden and crisp.",
+        "Rest before carving and serve with a liver-based lechon sauce."
+      ]
+    }
+  },
+  "Inihaw na Manok": {
+    "en": {
+      "ingredients": [
+        "chicken pieces or whole chicken, butterflied",
+        "soy sauce, calamansi, garlic marinade",
+        "banana ketchup or annatto oil (optional) for basting"
+      ],
+      "steps": [
+        "Marinate the chicken for at least an hour.",
+        "Grill over charcoal, basting occasionally, until cooked through and charred.",
+        "Serve with rice and a dipping sauce of soy sauce, calamansi and chili."
+      ]
+    }
+  },
+  "Fried Chicken": {
+    "en": {
+      "ingredients": [
+        "chicken pieces",
+        "flour and cornstarch breading, seasoned",
+        "egg wash or buttermilk soak",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Marinate or soak chicken briefly, then dredge in the seasoned flour mixture.",
+        "Deep-fry until golden brown and cooked through.",
+        "Drain and serve hot, classic Pinoy-style with rice and gravy or ketchup."
+      ]
+    }
+  },
+  "Chicken BBQ": {
+    "en": {
+      "ingredients": [
+        "chicken thighs or skewered chicken pieces",
+        "soy sauce, banana ketchup, calamansi, garlic marinade",
+        "brown sugar"
+      ],
+      "steps": [
+        "Marinate chicken for a few hours or overnight in the sweet-savory marinade.",
+        "Skewer if desired, then grill over charcoal, basting with the marinade.",
+        "Cook until slightly charred and cooked through; serve with rice."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "hita ng manok o manok na nakatusok",
+        "toyo, banana ketchup, kalamansi, bawang na panmarinade",
+        "brown sugar"
+      ],
+      "steps": [
+        "Ibabad ang manok sa matamis-maalat na marinade nang ilang oras o magdamag.",
+        "Itusok kung gusto, pagkatapos ihawin sa uling, binabasa ng marinade paminsan-minsan.",
+        "Lutuin hanggang bahagyang naitim at luto na; ihain kasama ang kanin."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "paa sa manok o manok nga gisulsol",
+        "toyo, banana ketchup, kalamansi, ahos nga timpla",
+        "brown sugar"
+      ],
+      "steps": [
+        "Ibabad ang manok sa tam-is-parat nga timpla og pipila ka oras o sa tibuok gabii.",
+        "Sulsuha kung gusto, dayon sugbaha sa uling, basaha usahay sa timpla.",
+        "Lutoa hangtod mangitngit og gamay ug lutô na; ihatag uban ang kan-on."
+      ]
+    }
+  },
+  "Chicken Pastel": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into pieces",
+        "cream or evaporated milk",
+        "potatoes, carrots, mushrooms, bell pepper",
+        "puff pastry or pie crust (optional, for the baked version)"
+      ],
+      "steps": [
+        "Saute garlic and onion, brown chicken, then add water and simmer until tender.",
+        "Add vegetables and simmer until soft, then stir in cream for a rich sauce.",
+        "Serve as a stew, or spoon into a dish, top with pastry, and bake until golden for the classic version."
+      ]
+    }
+  },
+  "Chicken Sotanghon": {
+    "en": {
+      "ingredients": [
+        "chicken, shredded after boiling",
+        "sotanghon (glass noodles), soaked",
+        "chicken broth",
+        "garlic, onion, wood ear mushrooms",
+        "fish sauce"
+      ],
+      "steps": [
+        "Boil chicken until tender, then shred the meat and reserve the broth.",
+        "Saute garlic and onion, add the broth and bring to a simmer.",
+        "Add sotanghon noodles and shredded chicken, cooking until noodles are tender; season with fish sauce."
+      ]
+    }
+  },
+  "Chicken Macaroni Soup": {
+    "en": {
+      "ingredients": [
+        "chicken, boiled and shredded",
+        "elbow macaroni",
+        "chicken broth",
+        "carrots, celery, cabbage",
+        "evaporated milk (optional)"
+      ],
+      "steps": [
+        "Boil chicken to make a broth, then shred the meat.",
+        "Add macaroni and vegetables to the broth, simmering until the pasta is tender.",
+        "Stir in milk for creaminess if desired, then return chicken and serve hot."
+      ]
+    }
+  },
+  "Chicken Curry Filipino Style": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into pieces",
+        "coconut milk",
+        "curry powder",
+        "potatoes, carrots, bell peppers",
+        "garlic, onion, ginger"
+      ],
+      "steps": [
+        "Saute garlic, onion and ginger, then brown the chicken with curry powder.",
+        "Add coconut milk and water, simmering until chicken is tender.",
+        "Add potatoes and carrots, cooking until soft, then finish with bell peppers."
+      ]
+    }
+  },
+  "Pininyahang Manok": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into pieces",
+        "pineapple chunks and juice",
+        "coconut milk or cream",
+        "bell pepper, carrots",
+        "garlic, onion"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the chicken.",
+        "Add pineapple juice and coconut milk/cream, simmering until chicken is tender.",
+        "Add pineapple chunks, carrots and bell pepper, cooking briefly before serving."
+      ]
+    }
+  },
+  "Halang-halang na Manok": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into pieces",
+        "coconut milk",
+        "ginger, lemongrass, siling labuyo (bird's eye chili)",
+        "chili leaves or malunggay"
+      ],
+      "steps": [
+        "Saute ginger and lemongrass, then brown the chicken.",
+        "Pour in coconut milk and simmer until the chicken is tender.",
+        "Add chopped chili for heat and greens, simmering briefly before serving — this Visayan dish is meant to be spicy."
+      ]
+    }
+  },
+  "Sinampalukang Manok": {
+    "en": {
+      "ingredients": [
+        "chicken, cut into pieces",
+        "fresh or ground tamarind for sourness",
+        "tamarind leaves (optional)",
+        "kangkong or string beans",
+        "onion, tomatoes"
+      ],
+      "steps": [
+        "Simmer chicken with onion and tomatoes until nearly tender.",
+        "Add tamarind and vegetables, simmering until the flavors meld and chicken is fully cooked.",
+        "Adjust sourness to taste and serve hot with rice."
+      ]
+    }
+  },
+  "Adobong Baboy": {
+    "en": {
+      "ingredients": [
+        "1 kg pork belly or shoulder, cubed",
+        "soy sauce, vinegar",
+        "garlic, bay leaf, peppercorns",
+        "sugar (optional)"
+      ],
+      "steps": [
+        "Combine pork with soy sauce, vinegar, garlic, bay leaf and pepper in a pot.",
+        "Bring to a boil, then simmer covered until pork is tender.",
+        "Uncover and simmer to reduce and thicken the sauce, then serve."
+      ]
+    }
+  },
+  "Adobong Manok at Baboy": {
+    "en": {
+      "ingredients": [
+        "500g chicken and 500g pork belly, cut up",
+        "soy sauce, vinegar",
+        "garlic, bay leaf, peppercorns"
+      ],
+      "steps": [
+        "Combine chicken, pork, soy sauce, vinegar, garlic and pepper in a pot.",
+        "Simmer covered until pork is tender (chicken will cook faster, so add it a bit later if preferred).",
+        "Reduce the sauce uncovered until slightly thickened, then serve."
+      ]
+    }
+  },
+  "Lechon": {
+    "en": {
+      "ingredients": [
+        "whole pig, cleaned",
+        "lemongrass, garlic, onion for stuffing",
+        "salt"
+      ],
+      "steps": [
+        "Season and stuff the pig cavity with lemongrass, garlic and onion.",
+        "Roast slowly on a spit over charcoal for several hours, turning continuously, until the skin is deep golden and crackling.",
+        "Rest briefly, then chop and serve with a liver-based lechon sauce."
+      ]
+    }
+  },
+  "Lechon Kawali": {
+    "en": {
+      "ingredients": [
+        "pork belly, whole slab",
+        "salt, pepper, bay leaf, garlic for boiling",
+        "cooking oil for deep frying"
+      ],
+      "steps": [
+        "Boil the pork belly with garlic, bay leaf, salt and pepper until tender; drain and dry well.",
+        "Deep-fry the boiled pork until the skin is golden and blistered/crispy.",
+        "Chop into pieces and serve with a vinegar-soy dip or lechon sauce."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "liyempo ng baboy, buong slab",
+        "asin, paminta, laurel, bawang para sa pagpapakulo",
+        "mantika para sa deep frying"
+      ],
+      "steps": [
+        "Pakuluan ang liyempo kasama ang bawang, laurel, asin at paminta hanggang lumambot; salain at patuyuin nang mabuti.",
+        "Iprito nang malalim sa mainit na mantika ang niluto nang baboy hanggang gumintong at pumutok-putok ang balat.",
+        "Hiwain at ihain kasama ang suka't toyong sawsawan o lechon sauce."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "liyempo sa baboy, tibuok slab",
+        "asin, paminta, laurel, ahos para sa pagpabukal",
+        "mantika para sa deep frying"
+      ],
+      "steps": [
+        "Pabukala ang liyempo uban ang ahos, laurel, asin ug paminta hangtod molumo; salaa ug pauga og maayo.",
+        "I-deep fry ang giluto nga baboy sa init nga mantika hangtod mamulawon ug mo-crispy ang panit.",
+        "Tadtara ug ihatag uban ang suka-toyo nga sawsawan o lechon sauce."
+      ]
+    }
+  },
+  "Crispy Pata": {
+    "en": {
+      "ingredients": [
+        "whole pork leg (pata)",
+        "salt, pepper, bay leaf, garlic for boiling",
+        "cooking oil for deep frying"
+      ],
+      "steps": [
+        "Boil the pork leg with aromatics until tender; drain and dry thoroughly (chilling helps crisp the skin).",
+        "Deep-fry until the skin is deeply golden and crackling, basting hot oil over any dry spots.",
+        "Serve with a soy-vinegar-chili dip."
+      ]
+    }
+  },
+  "Dinuguan": {
+    "en": {
+      "ingredients": [
+        "pork meat and offal, cubed",
+        "pork blood",
+        "vinegar",
+        "garlic, onion, siling haba",
+        "sugar to balance"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork meat and offal.",
+        "Add vinegar and simmer briefly without stirring too much, then pour in the pork blood.",
+        "Simmer gently, stirring occasionally, until thickened; season with sugar and chili to taste."
+      ]
+    }
+  },
+  "Bicol Express": {
+    "en": {
+      "ingredients": [
+        "pork belly, sliced",
+        "coconut milk",
+        "siling labuyo (bird's eye chili), plenty",
+        "bagoong alamang (shrimp paste)",
+        "garlic, onion, ginger"
+      ],
+      "steps": [
+        "Saute garlic, onion and ginger, then brown the pork slices.",
+        "Add coconut milk and bagoong, simmering until the pork is tender and sauce thickens.",
+        "Add chopped chili and simmer further to the desired spice level before serving."
+      ]
+    }
+  },
+  "Binagoongan": {
+    "en": {
+      "ingredients": [
+        "pork belly, cubed",
+        "bagoong alamang (shrimp paste)",
+        "vinegar",
+        "garlic, onion, tomatoes",
+        "siling haba, sugar"
+      ],
+      "steps": [
+        "Saute garlic, onion and tomatoes, then brown the pork.",
+        "Add bagoong and a little water, simmering until pork is tender.",
+        "Add vinegar and simmer briefly, seasoning with sugar and chili to balance the saltiness."
+      ]
+    }
+  },
+  "Pork Steak": {
+    "en": {
+      "ingredients": [
+        "pork chops or pork sliced thin",
+        "soy sauce, calamansi marinade",
+        "onion rings",
+        "black pepper, sugar"
+      ],
+      "steps": [
+        "Marinate pork briefly in soy sauce and calamansi.",
+        "Pan-fry the pork until browned and cooked through, then set aside.",
+        "Saute onions in the same pan with the marinade to make a sauce, then pour over the pork to serve."
+      ]
+    }
+  },
+  "Pork Tocino": {
+    "en": {
+      "ingredients": [
+        "pork, sliced thin",
+        "sugar, salt, curing salt (optional)",
+        "garlic, pineapple juice or annatto for color"
+      ],
+      "steps": [
+        "Marinate pork slices in the sweet cure for at least a day in the fridge.",
+        "Pan-fry with a little water and oil, letting the water cook off so the sugar caramelizes.",
+        "Cook until nicely browned and slightly sticky, then serve with rice and egg."
+      ]
+    }
+  },
+  "Longganisa": {
+    "en": {
+      "ingredients": [
+        "ground pork",
+        "garlic, sugar, vinegar or calamansi",
+        "paprika or annatto for color",
+        "sausage casings (optional)"
+      ],
+      "steps": [
+        "Mix ground pork with garlic, sugar, vinegar/calamansi and seasonings; stuff into casings or shape into patties.",
+        "Rest in the fridge to let flavors meld, ideally overnight.",
+        "Pan-fry with a little water first, then let the water evaporate so it browns and caramelizes."
+      ]
+    }
+  },
+  "Hamonado": {
+    "en": {
+      "ingredients": [
+        "pork, cubed",
+        "pineapple juice and chunks",
+        "soy sauce, sugar",
+        "garlic, onion, bay leaf"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork.",
+        "Add soy sauce, pineapple juice and bay leaf, simmering until pork is tender.",
+        "Add pineapple chunks and reduce the sauce until slightly sticky-sweet before serving."
+      ]
+    }
+  },
+  "Estofado": {
+    "en": {
+      "ingredients": [
+        "pork, cubed",
+        "soy sauce, vinegar, sugar",
+        "saba banana, fried",
+        "bay leaf, garlic, onion"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork.",
+        "Add soy sauce, vinegar, sugar and bay leaf, simmering until pork is tender and sauce is glossy.",
+        "Add fried saba banana just before serving."
+      ]
+    }
+  },
+  "Afritada": {
+    "en": {
+      "ingredients": [
+        "pork (or chicken), cubed",
+        "tomato sauce",
+        "potatoes, carrots, bell peppers",
+        "garlic, onion",
+        "bay leaf"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork.",
+        "Add tomato sauce and water, simmering until the meat is tender.",
+        "Add potatoes and carrots, cooking until soft, then finish with bell peppers."
+      ]
+    }
+  },
+  "Menudo": {
+    "en": {
+      "ingredients": [
+        "pork, cubed",
+        "liver, cubed",
+        "tomato sauce",
+        "potatoes, carrots, raisins (optional)",
+        "garlic, onion, bay leaf"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork.",
+        "Add tomato sauce and water, simmering until pork is tender.",
+        "Add potatoes, carrots and liver, cooking until vegetables are soft and liver is just cooked through."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "baboy, kinuwadro",
+        "atay, kinuwadro",
+        "tomato sauce",
+        "patatas, karot, pasas (optional)",
+        "bawang, sibuyas, laurel"
+      ],
+      "steps": [
+        "Igisa ang bawang at sibuyas, pagkatapos ay iprito ang baboy hanggang mamula.",
+        "Idagdag ang tomato sauce at tubig, pakuluin hanggang lumambot ang baboy.",
+        "Idagdag ang patatas, karot at atay, lutuin hanggang lumambot ang gulay at maluto ang atay."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "baboy, gikuwadro",
+        "atay, gikuwadro",
+        "tomato sauce",
+        "patatas, karot, pasas (optional)",
+        "ahos, sibuyas, laurel"
+      ],
+      "steps": [
+        "I-guisa ang ahos ug sibuyas, dayon ipapula ang baboy.",
+        "Idugang ang tomato sauce ug tubig, pabukala hangtod molumo ang baboy.",
+        "Idugang ang patatas, karot ug atay, lutoa hangtod molumo ang utanon ug maluto ang atay."
+      ]
+    }
+  },
+  "Caldereta": {
+    "en": {
+      "ingredients": [
+        "pork or goat/beef, cubed",
+        "tomato sauce, liver spread",
+        "potatoes, carrots, bell peppers, olives",
+        "garlic, onion",
+        "chili (optional)"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the meat.",
+        "Add tomato sauce and water, simmering until meat is tender, then stir in liver spread.",
+        "Add potatoes, carrots and olives, cooking until soft, then finish with bell peppers."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "baboy o kambing/baka, kinuwadro",
+        "tomato sauce, liver spread",
+        "patatas, karot, bell pepper, olibo",
+        "bawang, sibuyas",
+        "sili (optional)"
+      ],
+      "steps": [
+        "Igisa ang bawang at sibuyas, pagkatapos ay iprito ang karne hanggang mamula.",
+        "Idagdag ang tomato sauce at tubig, pakuluin hanggang lumambot ang karne, pagkatapos ihalo ang liver spread.",
+        "Idagdag ang patatas, karot at olibo, lutuin hanggang lumambot, at tapusin ng bell pepper."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "baboy o kanding/baka, gikuwadro",
+        "tomato sauce, liver spread",
+        "patatas, karot, bell pepper, olibo",
+        "ahos, sibuyas",
+        "sili (optional)"
+      ],
+      "steps": [
+        "I-guisa ang ahos ug sibuyas, dayon ipapula ang karne.",
+        "Idugang ang tomato sauce ug tubig, pabukala hangtod molumo ang karne, dayon isagol ang liver spread.",
+        "Idugang ang patatas, karot ug olibo, lutoa hangtod molumo, ug tapuson ug bell pepper."
+      ]
+    }
+  },
+  "Igado": {
+    "en": {
+      "ingredients": [
+        "pork liver and pork meat, sliced",
+        "soy sauce, vinegar",
+        "carrots, bell pepper, green peas",
+        "bay leaf, garlic, onion"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the pork meat.",
+        "Add soy sauce, vinegar and a little water, simmering until pork is nearly tender.",
+        "Add liver, carrots and peas, cooking briefly (liver cooks fast) before serving."
+      ]
+    }
+  },
+  "Sisig": {
+    "en": {
+      "ingredients": [
+        "pork face/ears and pork belly, boiled then grilled and chopped",
+        "onion, chili, calamansi",
+        "mayonnaise (optional)",
+        "raw egg to mix in at the table",
+        "chicken liver (optional, for extra richness)"
+      ],
+      "steps": [
+        "Boil pork parts with aromatics until tender, then grill briefly for char and chop finely.",
+        "Saute the chopped pork with onion and chili on a sizzling plate or hot pan.",
+        "Season with calamansi and season to taste, finishing with a raw egg cracked on top to mix in tableside."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "mukha/tenga ng baboy at liyempo, niluto pagkatapos ay inihaw at tinadtad",
+        "sibuyas, sili, kalamansi",
+        "mayonesa (optional)",
+        "hilaw na itlog na haluin sa mesa",
+        "atay ng manok (optional, para sa mas masarap na lasa)"
+      ],
+      "steps": [
+        "Pakuluan ang mga parte ng baboy kasama ang mga rekado hanggang lumambot, pagkatapos ihawin nang saglit para sa usok na lasa at tadtarin.",
+        "Igisa ang tinadtad na baboy kasama ang sibuyas at sili sa mainit na sizzling plate o kawali.",
+        "Timplahan ng kalamansi at ayon sa panlasa, tapusin ng hilaw na itlog na ihahalo sa mesa."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "nawong/dalunggan sa baboy ug liyempo, giluto dayon gisugba ug gitadtad",
+        "sibuyas, sili, kalamansi",
+        "mayonesa (optional)",
+        "hilaw nga itlog nga sagolon sa lamesa",
+        "atay sa manok (optional, para sa mas lami)"
+      ],
+      "steps": [
+        "Pabukala ang mga parte sa baboy uban ang mga rekado hangtod molumo, dayon sugbaha og gamay para sa asuhos nga lami ug tadtara.",
+        "I-guisa ang gitadtad nga baboy uban ang sibuyas ug sili sa init nga sizzling plate o kawali.",
+        "Timplahi ug kalamansi ug sumala sa lami, tapuson ug hilaw nga itlog nga sagolon sa lamesa."
+      ]
+    }
+  },
+  "Pata Tim": {
+    "en": {
+      "ingredients": [
+        "whole pork leg (pata)",
+        "soy sauce, star anise, brown sugar",
+        "garlic, dried shiitake mushrooms, bok choy",
+        "cornstarch slurry to thicken"
+      ],
+      "steps": [
+        "Braise the pork leg slowly in soy sauce, star anise, sugar and aromatics until very tender.",
+        "Add mushrooms partway through cooking.",
+        "Thicken the sauce with cornstarch slurry and serve with steamed bok choy."
+      ]
+    }
+  },
+  "Humba": {
+    "en": {
+      "ingredients": [
+        "pork belly, cubed",
+        "soy sauce, vinegar, brown sugar",
+        "banana blossom or black beans (tausi), star anise",
+        "garlic, bay leaf, salted black beans (optional)"
+      ],
+      "steps": [
+        "Saute garlic, then brown the pork.",
+        "Add soy sauce, vinegar, sugar, star anise and bay leaf, simmering slowly until very tender.",
+        "Stir in banana blossom or black beans and continue simmering until the sauce is thick and sticky."
+      ]
+    }
+  },
+  "Sweet and Sour Pork": {
+    "en": {
+      "ingredients": [
+        "pork, cubed and battered",
+        "pineapple chunks and juice",
+        "bell peppers, onion, carrots",
+        "vinegar, sugar, ketchup for the sauce",
+        "cornstarch slurry"
+      ],
+      "steps": [
+        "Deep-fry the battered pork until golden and crisp; set aside.",
+        "Saute vegetables briefly, then add pineapple, vinegar, sugar and ketchup, simmering into a sauce.",
+        "Thicken with cornstarch slurry, toss in the fried pork just before serving so it stays crisp."
+      ]
+    }
+  },
+  "Pork BBQ": {
+    "en": {
+      "ingredients": [
+        "pork shoulder or belly, sliced thin, skewered",
+        "soy sauce, banana ketchup, calamansi, garlic marinade",
+        "brown sugar"
+      ],
+      "steps": [
+        "Marinate the pork skewers for a few hours or overnight.",
+        "Grill over charcoal, basting with the marinade, until caramelized and cooked through.",
+        "Serve with rice and the leftover marinade boiled down as a dip."
+      ]
+    }
+  },
+  "Inihaw na Liempo": {
+    "en": {
+      "ingredients": [
+        "pork belly slab",
+        "soy sauce, calamansi, garlic marinade",
+        "banana ketchup or annatto (optional) for basting"
+      ],
+      "steps": [
+        "Marinate the pork belly for at least an hour.",
+        "Grill over charcoal, turning occasionally and basting, until charred outside and cooked through.",
+        "Slice and serve with a soy-vinegar dipping sauce."
+      ]
+    }
+  },
+  "Sinugba nga Baboy": {
+    "en": {
+      "ingredients": [
+        "pork belly or shoulder, sliced",
+        "soy sauce, calamansi, garlic marinade"
+      ],
+      "steps": [
+        "Marinate the pork briefly in the soy-calamansi mixture.",
+        "Grill over hot charcoal until nicely charred and cooked through.",
+        "Serve with a vinegar-soy dip and rice."
+      ]
+    }
+  },
+  "Kinamunggayan": {
+    "en": {
+      "ingredients": [
+        "pork, cubed",
+        "malunggay leaves",
+        "coconut milk or a clear broth",
+        "ginger, onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer pork with ginger and onion until tender.",
+        "Add coconut milk (or keep it as a clear broth) and simmer further.",
+        "Stir in malunggay leaves at the end, season with fish sauce, and serve."
+      ]
+    }
+  },
+  "Linat-ang Baboy": {
+    "en": {
+      "ingredients": [
+        "pork ribs or bone-in pork, cubed",
+        "cabbage, potatoes, corn (similar to nilaga)",
+        "onion, ginger",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer pork with onion and ginger until tender, skimming impurities.",
+        "Add potatoes and corn, cooking until soft.",
+        "Add cabbage last and season with fish sauce before serving — the Visayan version of nilaga."
+      ]
+    }
+  },
+  "Humba Bisaya": {
+    "en": {
+      "ingredients": [
+        "pork belly, cubed",
+        "soy sauce, vinegar, brown sugar",
+        "banana blossom, star anise",
+        "garlic, bay leaf, peanuts (regional touch)"
+      ],
+      "steps": [
+        "Saute garlic, then brown the pork.",
+        "Add soy sauce, vinegar, sugar, star anise and bay leaf, simmering slowly until tender.",
+        "Stir in banana blossom and a handful of peanuts, simmering until the sauce is rich and sticky."
+      ]
+    }
+  },
+  "Balbacoa": {
+    "en": {
+      "ingredients": [
+        "beef or pork shank/oxtail, cubed",
+        "soy sauce, banana blossom",
+        "peanut butter or ground peanuts",
+        "garlic, onion, star anise"
+      ],
+      "steps": [
+        "Simmer the meat slowly with garlic, onion and star anise until very tender.",
+        "Stir in peanut butter for a rich, nutty sauce.",
+        "Add banana blossom, simmer until thick, and serve hot."
+      ]
+    }
+  },
+  "Beef Steak / Bistek Tagalog": {
+    "en": {
+      "ingredients": [
+        "beef sirloin, sliced thin",
+        "soy sauce, calamansi marinade",
+        "onion rings",
+        "black pepper, sugar"
+      ],
+      "steps": [
+        "Marinate beef slices in soy sauce and calamansi for at least 30 minutes.",
+        "Pan-fry the beef quickly over high heat until browned, then set aside.",
+        "Saute onions in the pan with the marinade to make a sauce, then return beef briefly before serving."
+      ]
+    }
+  },
+  "Bistek Tagalog": {
+    "en": {
+      "ingredients": [
+        "beef sirloin, sliced thin",
+        "soy sauce, calamansi marinade",
+        "onion rings",
+        "black pepper, sugar"
+      ],
+      "steps": [
+        "Marinate the beef in soy sauce and calamansi.",
+        "Sear the beef quickly in a hot pan, then set aside.",
+        "Simmer the marinade with onions into a light sauce and pour over the beef to serve."
+      ]
+    }
+  },
+  "Beef Caldereta": {
+    "en": {
+      "ingredients": [
+        "beef chunks (chuck or shank)",
+        "tomato sauce, liver spread",
+        "potatoes, carrots, bell peppers, olives",
+        "garlic, onion",
+        "chili (optional)"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the beef.",
+        "Add tomato sauce and water, simmering slowly until beef is tender.",
+        "Stir in liver spread, add potatoes, carrots and olives, cooking until soft, then finish with bell peppers."
+      ]
+    }
+  },
+  "Beef Mechado": {
+    "en": {
+      "ingredients": [
+        "beef chunks, larded with pork fat strips (optional)",
+        "tomato sauce",
+        "potatoes, carrots",
+        "garlic, onion, bay leaf",
+        "soy sauce"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the beef.",
+        "Add tomato sauce, soy sauce and bay leaf, simmering slowly until the beef is fork-tender.",
+        "Add potatoes and carrots, cooking until soft, then serve."
+      ]
+    }
+  },
+  "Beef Morcon": {
+    "en": {
+      "ingredients": [
+        "beef flank, sliced thin and pounded",
+        "hotdog, carrot, pickle, cheese for filling",
+        "tomato sauce",
+        "garlic, onion, bay leaf"
+      ],
+      "steps": [
+        "Lay out the flattened beef and place the fillings in a line, then roll tightly and tie with kitchen twine.",
+        "Sear the roll, then braise in tomato sauce with garlic, onion and bay leaf until tender.",
+        "Cool slightly before slicing into rounds; serve with the sauce."
+      ]
+    }
+  },
+  "Beef Afritada": {
+    "en": {
+      "ingredients": [
+        "beef chunks",
+        "tomato sauce",
+        "potatoes, carrots, bell peppers",
+        "garlic, onion, bay leaf"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the beef.",
+        "Add tomato sauce and water, simmering slowly until tender.",
+        "Add potatoes and carrots, cooking until soft, then finish with bell peppers."
+      ]
+    }
+  },
+  "Beef Pares": {
+    "en": {
+      "ingredients": [
+        "beef brisket or shank, cubed",
+        "soy sauce, star anise, brown sugar",
+        "garlic, ginger, onion",
+        "garlic fried rice and clear soup to serve alongside"
+      ],
+      "steps": [
+        "Simmer beef slowly with soy sauce, star anise, sugar and aromatics until very tender.",
+        "Reduce the braising liquid into a glossy, slightly sweet sauce.",
+        "Serve the beef and sauce with garlic rice and a side of clear beef broth."
+      ]
+    }
+  },
+  "Kare-Kare": {
+    "en": {
+      "ingredients": [
+        "oxtail and tripe (or beef shank), cubed",
+        "peanut butter or ground toasted rice and peanuts for the sauce",
+        "eggplant, string beans, banana blossom, bok choy",
+        "annatto for color",
+        "bagoong alamang, served on the side"
+      ],
+      "steps": [
+        "Simmer the oxtail slowly until very tender, reserving the broth.",
+        "Saute aromatics, then build the sauce with peanut butter, ground toasted rice and annatto, thinning with the reserved broth.",
+        "Add the meat and vegetables, simmering until the vegetables are tender; serve with bagoong on the side."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "buntot ng baka at tuwalya (o kamto ng baka), kinuwadro",
+        "peanut butter o giniling na tinustadong kanin at mani para sa sabaw",
+        "talong, sitaw, puso ng saging, pechay",
+        "achuete para sa kulay",
+        "bagoong alamang, ihahain sa tabi"
+      ],
+      "steps": [
+        "Pakuluan ang buntot ng baka nang mahinay hanggang lumambot na lumambot, itago ang sabaw.",
+        "Igisa ang mga rekado, pagkatapos ay gawin ang sabaw gamit ang peanut butter, giniling na tinustadong kanin at achuete, palusawin gamit ang natirang sabaw.",
+        "Idagdag ang karne at mga gulay, pakuluan hanggang lumambot ang mga gulay; ihain kasama ang bagoong sa tabi."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "ikog sa baka ug tuwalya (o bitiis sa baka), gikuwadro",
+        "peanut butter o gigaling nga sinangag nga bugas ug mani para sa sabaw",
+        "talong, batong, puso sa saging, petsay",
+        "achuete para sa kolor",
+        "bagoong alamang, ihatag sa kilid"
+      ],
+      "steps": [
+        "Pabukala ang ikog sa baka og hinay hangtod molumo pag-ayo, tipigi ang sabaw.",
+        "I-guisa ang mga rekado, dayon buhata ang sabaw gamit ang peanut butter, sinangag nga bugas ug achuete, pahupoton gamit ang natipigan nga sabaw.",
+        "Idugang ang karne ug mga utanon, pabukala hangtod molumo ang mga utanon; ihatag uban ang bagoong sa kilid."
+      ]
+    }
+  },
+  "Beef Tapa": {
+    "en": {
+      "ingredients": [
+        "beef, sliced thin",
+        "soy sauce, garlic, sugar, calamansi marinade",
+        "black pepper"
+      ],
+      "steps": [
+        "Marinate the beef slices for at least an hour, ideally overnight.",
+        "Pan-fry until browned and slightly caramelized at the edges.",
+        "Serve with garlic rice, a fried egg, and vinegar-garlic dip (a classic tapsilog)."
+      ]
+    }
+  },
+  "Beef Salpicao": {
+    "en": {
+      "ingredients": [
+        "beef tenderloin or sirloin, cubed",
+        "soy sauce, garlic (lots), Worcestershire sauce",
+        "butter",
+        "black pepper, mushrooms (optional)"
+      ],
+      "steps": [
+        "Marinate beef cubes briefly in soy sauce and Worcestershire sauce.",
+        "Sear the beef quickly in butter over high heat, keeping it tender and juicy.",
+        "Toss with plenty of toasted garlic bits and a generous crack of black pepper before serving."
+      ]
+    }
+  },
+  "Beef with Mushroom": {
+    "en": {
+      "ingredients": [
+        "beef, sliced thin",
+        "mushrooms (button or oyster)",
+        "oyster sauce, soy sauce",
+        "garlic, onion, cornstarch slurry"
+      ],
+      "steps": [
+        "Marinate beef briefly in soy sauce and cornstarch.",
+        "Stir-fry beef quickly over high heat until just browned, then set aside.",
+        "Saute garlic, onion and mushrooms, add oyster sauce and a little water, then return beef and toss until glazed."
+      ]
+    }
+  },
+  "Beef Sinigang": {
+    "en": {
+      "ingredients": [
+        "beef short ribs or shank, cubed",
+        "tamarind sinigang mix",
+        "radish, tomatoes, string beans, kangkong",
+        "onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer beef slowly with onion until fork-tender, skimming impurities.",
+        "Add radish and beans, then season with sinigang mix and fish sauce.",
+        "Finish with kangkong just before serving."
+      ]
+    }
+  },
+  "Beef Pares Mami": {
+    "en": {
+      "ingredients": [
+        "braised beef pares (see Beef Pares)",
+        "egg noodles (miki)",
+        "beef broth from the braise",
+        "garlic, green onions"
+      ],
+      "steps": [
+        "Prepare beef pares as its own dish, keeping the flavorful braising liquid.",
+        "Cook noodles and place in a bowl with the braising liquid as broth.",
+        "Top with the braised beef, toasted garlic and green onions."
+      ]
+    }
+  },
+  "Kinilaw na Baka": {
+    "en": {
+      "ingredients": [
+        "thin-sliced or lightly seared beef (regional variation)",
+        "vinegar or calamansi juice",
+        "onion, ginger, chili",
+        "salt"
+      ],
+      "steps": [
+        "Slice the beef thinly, searing briefly if using a cooked variation.",
+        "Toss with vinegar or calamansi juice, onion, ginger and chili.",
+        "Season with salt and let it marinate briefly before serving chilled."
+      ]
+    }
+  },
+  "Lengua": {
+    "en": {
+      "ingredients": [
+        "beef tongue, whole",
+        "soy sauce, mushroom sauce or tomato sauce",
+        "garlic, onion, bay leaf",
+        "potatoes, carrots (optional)"
+      ],
+      "steps": [
+        "Boil the tongue until tender enough to peel the outer skin off easily.",
+        "Slice and braise in a savory sauce (soy or tomato-based) with garlic, onion and bay leaf.",
+        "Simmer until the sauce thickens and the tongue is very tender, then serve."
+      ]
+    }
+  },
+  "Lengua Estofado": {
+    "en": {
+      "ingredients": [
+        "beef tongue, whole",
+        "soy sauce, vinegar, sugar",
+        "bay leaf, garlic, onion",
+        "fried saba banana"
+      ],
+      "steps": [
+        "Boil and peel the tongue as with lengua, then slice.",
+        "Braise in soy sauce, vinegar, sugar and bay leaf until very tender and the sauce is glossy.",
+        "Serve topped with fried saba banana slices."
+      ]
+    }
+  },
+  "Bulanglang na Baka": {
+    "en": {
+      "ingredients": [
+        "beef, cubed",
+        "assorted native vegetables (squash, string beans, eggplant)",
+        "ginger, onion",
+        "fish sauce or bagoong"
+      ],
+      "steps": [
+        "Simmer beef with ginger and onion until tender.",
+        "Add the harder vegetables first (squash), then softer ones (beans, eggplant) as they near doneness.",
+        "Season with fish sauce or bagoong and serve as a light Visayan vegetable-beef stew."
+      ]
+    }
+  },
+  "Pinakbet": {
+    "en": {
+      "ingredients": [
+        "squash, eggplant, string beans, okra, bitter melon",
+        "bagoong alamang (shrimp paste)",
+        "pork (optional)",
+        "garlic, onion, tomatoes",
+        "ginger"
+      ],
+      "steps": [
+        "Saute garlic, onion, ginger and tomatoes, adding pork if using and cooking until browned.",
+        "Add the harder vegetables first (squash), then the rest, along with bagoong and a little water.",
+        "Simmer until vegetables are just tender, keeping some bite, then serve."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "kalabasa, talong, sitaw, okra, ampalaya",
+        "bagoong alamang",
+        "baboy (optional)",
+        "bawang, sibuyas, kamatis",
+        "luya"
+      ],
+      "steps": [
+        "Igisa ang bawang, sibuyas, luya at kamatis, idagdag ang baboy kung gagamitin at lutuin hanggang mamula.",
+        "Idagdag muna ang matigas na gulay (kalabasa), pagkatapos ang iba, kasama ang bagoong at kaunting tubig.",
+        "Pakuluan hanggang lumambot ang mga gulay pero hindi masyadong malambot, pagkatapos ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "kalabasa, talong, batong, okra, ampalaya",
+        "bagoong alamang",
+        "baboy (optional)",
+        "ahos, sibuyas, kamatis",
+        "luy-a"
+      ],
+      "steps": [
+        "I-guisa ang ahos, sibuyas, luy-a ug kamatis, idugang ang baboy kung gamiton ug lutoa hangtod mamula.",
+        "Unaha ug butang ang gahi nga utanon (kalabasa), dayon ang uban, uban ang bagoong ug gamay nga tubig.",
+        "Pabukala hangtod molumo ang mga utanon apan dili kaayo, dayon ihatag."
+      ]
+    }
+  },
+  "Pakbet Ilocano": {
+    "en": {
+      "ingredients": [
+        "squash, eggplant, string beans, okra, bitter melon",
+        "bagoong monamon or bagoong isda (Ilocano fish sauce paste)",
+        "pork bits (optional)",
+        "garlic, onion, ginger, tomatoes"
+      ],
+      "steps": [
+        "Saute garlic, onion, ginger and tomatoes with pork bits if using.",
+        "Add vegetables starting with the sturdiest, along with the Ilocano bagoong and a little water.",
+        "Simmer briefly until just tender; the Ilocano version leans saltier and less saucy than other regions'."
+      ]
+    }
+  },
+  "Dinengdeng": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (squash, string beans, bitter melon, okra)",
+        "bagoong monamon or fish sauce",
+        "dried or grilled fish (optional)",
+        "ginger, garlic, onion"
+      ],
+      "steps": [
+        "Bring a simple broth of water, garlic, onion and ginger to a boil.",
+        "Add bagoong and dried/grilled fish for depth, then add vegetables.",
+        "Simmer until vegetables are tender — a soupier, more broth-forward cousin of pinakbet."
+      ]
+    }
+  },
+  "Bulanglang": {
+    "en": {
+      "ingredients": [
+        "assorted native vegetables (squash, string beans, sitaw, okra)",
+        "shrimp or fish (optional)",
+        "ginger, onion",
+        "bagoong or fish sauce"
+      ],
+      "steps": [
+        "Simmer ginger, onion and shrimp/fish (if using) in water to build a light broth.",
+        "Add vegetables starting with the firmest.",
+        "Season with bagoong or fish sauce and simmer until just tender."
+      ]
+    }
+  },
+  "Law-oy": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (squash, string beans, okra, eggplant)",
+        "fish or shrimp",
+        "ginger, onion",
+        "fish sauce or bagoong"
+      ],
+      "steps": [
+        "Simmer ginger, onion and fish/shrimp in water.",
+        "Add vegetables, starting with the firmer ones.",
+        "Season with fish sauce or bagoong and simmer until vegetables are tender — the Visayan version of dinengdeng."
+      ]
+    }
+  },
+  "Laswa": {
+    "en": {
+      "ingredients": [
+        "assorted native vegetables (squash, okra, string beans, patola)",
+        "shrimp or fish (optional)",
+        "ginger, onion",
+        "fish sauce"
+      ],
+      "steps": [
+        "Build a light broth with ginger, onion and shrimp/fish if using.",
+        "Add vegetables in order of firmness.",
+        "Season with fish sauce and simmer briefly, keeping vegetables tender-crisp."
+      ]
+    }
+  },
+  "Laing": {
+    "en": {
+      "ingredients": [
+        "dried taro leaves",
+        "coconut milk",
+        "siling labuyo (bird's eye chili)",
+        "garlic, onion, ginger",
+        "bagoong alamang or pork bits (optional)"
+      ],
+      "steps": [
+        "Layer dried taro leaves in a pot without stirring too much (to prevent itchiness) with garlic, onion and ginger.",
+        "Pour in coconut milk and add chili and bagoong/pork if using.",
+        "Simmer low and slow, undisturbed at first, until the leaves are tender and the sauce thickens."
+      ]
+    }
+  },
+  "Ginisang Ampalaya": {
+    "en": {
+      "ingredients": [
+        "bitter melon (ampalaya), sliced",
+        "egg, beaten",
+        "tomatoes, onion, garlic",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and tomatoes.",
+        "Add sliced ampalaya and cook until slightly softened, seasoning with fish sauce.",
+        "Pour in beaten egg and stir until just set, then serve."
+      ]
+    }
+  },
+  "Ginisang Sayote": {
+    "en": {
+      "ingredients": [
+        "chayote (sayote), sliced",
+        "shrimp or pork bits (optional)",
+        "garlic, onion, tomatoes",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion, tomatoes and shrimp/pork if using.",
+        "Add sliced chayote and a little water, cover and cook until tender.",
+        "Season with fish sauce and serve."
+      ]
+    }
+  },
+  "Ginisang Upo": {
+    "en": {
+      "ingredients": [
+        "bottle gourd (upo), sliced",
+        "shrimp or pork bits (optional)",
+        "garlic, onion, tomatoes",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion, tomatoes and shrimp/pork if using.",
+        "Add sliced upo, cover and cook until tender and translucent.",
+        "Season with fish sauce and serve hot."
+      ]
+    }
+  },
+  "Ginisang Pechay": {
+    "en": {
+      "ingredients": [
+        "pechay (bok choy), chopped",
+        "garlic, onion",
+        "shrimp or pork bits (optional)",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and shrimp/pork if using.",
+        "Add pechay and cook briefly just until wilted.",
+        "Season with fish sauce and serve immediately to keep it crisp."
+      ]
+    }
+  },
+  "Ginisang Monggo": {
+    "en": {
+      "ingredients": [
+        "mung beans (monggo), boiled until soft",
+        "pork or shrimp",
+        "malunggay or spinach leaves",
+        "garlic, onion, tomatoes",
+        "fish sauce"
+      ],
+      "steps": [
+        "Boil mung beans until soft, mashing some for a creamier texture.",
+        "Saute garlic, onion, tomatoes and pork/shrimp, then combine with the cooked beans.",
+        "Simmer briefly, add greens, season with fish sauce, and serve."
+      ]
+    }
+  },
+  "Ginisang Togue": {
+    "en": {
+      "ingredients": [
+        "mung bean sprouts (togue)",
+        "tofu, sliced (optional)",
+        "garlic, onion, tomatoes",
+        "shrimp or pork bits (optional)",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion, tomatoes and shrimp/pork/tofu if using.",
+        "Add bean sprouts and stir-fry briefly over high heat to keep them crisp.",
+        "Season with fish sauce and serve immediately."
+      ]
+    }
+  },
+  "Ginisang Repolyo": {
+    "en": {
+      "ingredients": [
+        "cabbage (repolyo), sliced",
+        "carrots",
+        "garlic, onion",
+        "shrimp or pork bits (optional)",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and shrimp/pork if using.",
+        "Add cabbage and carrots, stir-frying until just tender.",
+        "Season with fish sauce and serve while still slightly crisp."
+      ]
+    }
+  },
+  "Ginisang Sitaw": {
+    "en": {
+      "ingredients": [
+        "string beans (sitaw), cut into pieces",
+        "garlic, onion, tomatoes",
+        "shrimp or pork bits (optional)",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion, tomatoes and shrimp/pork if using.",
+        "Add string beans and a splash of water, cooking until tender-crisp.",
+        "Season with fish sauce and serve."
+      ]
+    }
+  },
+  "Ginisang Talong": {
+    "en": {
+      "ingredients": [
+        "eggplant, sliced",
+        "garlic, onion, tomatoes",
+        "shrimp or pork bits, or egg",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and tomatoes.",
+        "Add eggplant and cook until soft, adding shrimp/pork or beaten egg to finish.",
+        "Season with fish sauce and serve."
+      ]
+    }
+  },
+  "Tortang Talong": {
+    "en": {
+      "ingredients": [
+        "eggplant, grilled and flattened",
+        "beaten egg",
+        "garlic, salt and pepper",
+        "ground pork (optional, for tortang talong with giniling)"
+      ],
+      "steps": [
+        "Grill the eggplant until the skin chars and the flesh softens, then peel and flatten with a fork.",
+        "Dip in beaten egg (season the egg with salt and pepper; mix in ground pork for a heartier version).",
+        "Pan-fry until the egg sets and both sides are lightly golden."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "talong, inihaw at pinatag",
+        "hinalong itlog",
+        "bawang, asin at paminta",
+        "giniling na baboy (optional, para sa tortang talong na may giniling)"
+      ],
+      "steps": [
+        "Ihawin ang talong hanggang maitim ang balat at lumambot ang laman, pagkatapos ay balatan at patagin gamit ang tinidor.",
+        "Ibabad sa hinalong itlog (timplahan ang itlog ng asin at paminta; ihalo ang giniling na baboy para sa mas masustansyang bersyon).",
+        "Iprito hanggang mag-set ang itlog at gumintong nang bahagya ang dalawang gilid."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "talong, gisugba ug gipatag",
+        "gisagol nga itlog",
+        "ahos, asin ug paminta",
+        "giniling nga baboy (optional, para sa tortang talong nga adunay giniling)"
+      ],
+      "steps": [
+        "Sugbaha ang talong hangtod maitom ang panit ug molumo ang unod, dayon panita ug patagon gamit ang tinidor.",
+        "Ibabad sa gisagol nga itlog (timplahi ang itlog ug asin ug paminta; isagol ang giniling nga baboy para sa mas lami nga bersyon).",
+        "Iprito hangtod maglig-on ang itlog ug mamulawon og gamay ang duha ka kilid."
+      ]
+    }
+  },
+  "Ensaladang Talong": {
+    "en": {
+      "ingredients": [
+        "grilled eggplant, peeled and flattened",
+        "tomatoes, onion",
+        "vinegar, fish sauce or salt"
+      ],
+      "steps": [
+        "Grill the eggplant until soft and charred, then peel and flatten.",
+        "Top with sliced tomatoes and onion.",
+        "Dress with vinegar and fish sauce or salt to taste; serve cold or at room temperature."
+      ]
+    }
+  },
+  "Ensaladang Pipino": {
+    "en": {
+      "ingredients": [
+        "cucumber, sliced",
+        "tomatoes, onion",
+        "vinegar, salt, sugar"
+      ],
+      "steps": [
+        "Slice cucumber, tomato and onion thinly.",
+        "Combine in a bowl.",
+        "Dress with vinegar, a pinch of salt and sugar, tossing just before serving."
+      ]
+    }
+  },
+  "Chopsuey": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (cabbage, carrots, snow peas, cauliflower, broccoli)",
+        "shrimp or chicken (optional)",
+        "garlic, onion",
+        "oyster sauce, cornstarch slurry"
+      ],
+      "steps": [
+        "Saute garlic, onion, and shrimp/chicken if using.",
+        "Add the vegetables in order of firmness, stir-frying briefly.",
+        "Add oyster sauce and a splash of water or broth, thicken with cornstarch slurry, and serve while vegetables are still crisp."
+      ]
+    }
+  },
+  "Adobong Kangkong": {
+    "en": {
+      "ingredients": [
+        "kangkong (water spinach)",
+        "soy sauce, vinegar",
+        "garlic",
+        "chili (optional)"
+      ],
+      "steps": [
+        "Saute garlic in a hot pan.",
+        "Add kangkong and toss quickly with soy sauce and vinegar.",
+        "Cook briefly over high heat just until wilted, then serve immediately."
+      ]
+    }
+  },
+  "Adobong Sitaw": {
+    "en": {
+      "ingredients": [
+        "string beans (sitaw), cut into pieces",
+        "soy sauce, vinegar",
+        "garlic, pork bits (optional)"
+      ],
+      "steps": [
+        "Saute garlic (and pork bits if using) until fragrant.",
+        "Add string beans, soy sauce and vinegar.",
+        "Simmer briefly until beans are tender-crisp, then serve."
+      ]
+    }
+  },
+  "Ginataang Kalabasa at Sitaw": {
+    "en": {
+      "ingredients": [
+        "squash (kalabasa), cubed",
+        "string beans (sitaw)",
+        "coconut milk",
+        "shrimp or pork bits (optional)",
+        "garlic, onion, ginger"
+      ],
+      "steps": [
+        "Saute garlic, onion, ginger and shrimp/pork if using.",
+        "Add squash and coconut milk, simmering until the squash begins to soften.",
+        "Add string beans and cook until both vegetables are tender."
+      ]
+    }
+  },
+  "Ginataang Langka": {
+    "en": {
+      "ingredients": [
+        "young unripe jackfruit (langka), cubed",
+        "coconut milk",
+        "pork or dried fish (optional)",
+        "garlic, onion, ginger",
+        "chili"
+      ],
+      "steps": [
+        "Saute garlic, onion and ginger, adding pork/dried fish if using.",
+        "Add jackfruit and coconut milk, simmering until the jackfruit is tender.",
+        "Add chili and simmer briefly before serving."
+      ]
+    }
+  },
+  "Ginataang Gulay": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (squash, string beans, eggplant)",
+        "coconut milk",
+        "shrimp or pork bits (optional)",
+        "garlic, onion, ginger"
+      ],
+      "steps": [
+        "Saute garlic, onion, ginger and shrimp/pork if using.",
+        "Add the vegetables and coconut milk, simmering until tender.",
+        "Adjust seasoning and serve hot."
+      ]
+    }
+  },
+  "Paksiw na Gulay": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (eggplant, squash, string beans)",
+        "fried fish or bagoong",
+        "vinegar, garlic",
+        "ginger"
+      ],
+      "steps": [
+        "Saute garlic and ginger, then add vinegar and bring to a simmer.",
+        "Add vegetables and fried fish or bagoong.",
+        "Simmer until vegetables are tender and the flavors meld."
+      ]
+    }
+  },
+  "Crispy Kangkong": {
+    "en": {
+      "ingredients": [
+        "kangkong (water spinach) leaves and tender stems",
+        "batter of flour and cornstarch",
+        "cooking oil for deep frying"
+      ],
+      "steps": [
+        "Dip kangkong sprigs into a light batter.",
+        "Deep-fry briefly until crisp and golden.",
+        "Drain and serve immediately with a vinegar or spiced dip while still crunchy."
+      ]
+    }
+  },
+  "Ukoy": {
+    "en": {
+      "ingredients": [
+        "shrimp, small whole or chopped",
+        "bean sprouts, sliced squash (optional)",
+        "flour and cornstarch batter",
+        "garlic, achuete for color"
+      ],
+      "steps": [
+        "Mix batter with vegetables and shrimp.",
+        "Ladle spoonfuls into hot oil, flattening into thin fritters.",
+        "Fry until golden and crisp on both sides; serve with a vinegar-garlic dip."
+      ]
+    }
+  },
+  "Lumpiang Gulay": {
+    "en": {
+      "ingredients": [
+        "assorted vegetables (carrots, cabbage, sayote, green beans), julienned",
+        "tofu or shrimp (optional)",
+        "garlic, onion",
+        "lumpia wrapper",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic and onion, then stir-fry the vegetables (and tofu/shrimp if using) until just tender; drain excess liquid.",
+        "Season with fish sauce, cool slightly, then wrap in lumpia wrappers.",
+        "Serve fresh (unfried) or lightly fried, with a sweet or vinegar dip."
+      ]
+    }
+  },
+  "Ginataang Kuhol": {
+    "en": {
+      "ingredients": [
+        "river snails (kuhol), cleaned",
+        "coconut milk",
+        "siling labuyo, ginger, garlic, onion",
+        "chili leaves"
+      ],
+      "steps": [
+        "Saute ginger, garlic and onion, then add kuhol.",
+        "Pour in coconut milk and simmer until the coconut milk thickens and infuses the snails.",
+        "Add chili and chili leaves, simmering briefly before serving (eaten by sucking the meat out of the shells)."
+      ]
+    }
+  },
+  "Ginataang Puso ng Saging": {
+    "en": {
+      "ingredients": [
+        "banana blossom (puso ng saging), sliced",
+        "coconut milk",
+        "pork or shrimp (optional)",
+        "garlic, onion, ginger",
+        "chili"
+      ],
+      "steps": [
+        "Boil the sliced banana blossom briefly to remove bitterness, then drain.",
+        "Saute garlic, onion, ginger and pork/shrimp if using, then add the banana blossom and coconut milk.",
+        "Simmer until tender and the sauce thickens; add chili before serving."
+      ]
+    }
+  },
+  "Ginataang Mais": {
+    "en": {
+      "ingredients": [
+        "fresh young corn kernels",
+        "coconut milk",
+        "sugar, a little salt",
+        "glutinous rice (optional, for a thicker porridge-like version)"
+      ],
+      "steps": [
+        "Simmer corn kernels in coconut milk over low heat.",
+        "Add sugar and a pinch of salt, stirring occasionally.",
+        "Cook until the mixture thickens slightly, then serve warm as a snack or side."
+      ]
+    }
+  },
+  "Tortang Giniling": {
+    "en": {
+      "ingredients": [
+        "ground pork",
+        "beaten eggs",
+        "onion, carrots, potatoes (optional)",
+        "salt and pepper"
+      ],
+      "steps": [
+        "Saute ground pork with onion (and carrots/potatoes if using) until cooked through.",
+        "Mix the cooked pork into beaten eggs, seasoning with salt and pepper.",
+        "Pan-fry like an omelet until both sides are set and lightly golden."
+      ]
+    }
+  },
+  "Tortang Sardinas": {
+    "en": {
+      "ingredients": [
+        "canned sardines in tomato sauce, mashed",
+        "beaten eggs",
+        "onion, tomatoes (optional)",
+        "salt and pepper"
+      ],
+      "steps": [
+        "Mash the sardines and mix with chopped onion and tomatoes if using.",
+        "Combine with beaten eggs, seasoning with salt and pepper.",
+        "Pan-fry as a flat omelet until set on both sides."
+      ]
+    }
+  },
+  "Tortang Dulong": {
+    "en": {
+      "ingredients": [
+        "dulong (tiny silver fish)",
+        "beaten eggs",
+        "onion, tomatoes",
+        "salt and pepper"
+      ],
+      "steps": [
+        "Mix dulong with chopped onion and tomatoes.",
+        "Combine with beaten eggs and season with salt and pepper.",
+        "Pan-fry in small patties until golden on both sides."
+      ]
+    }
+  },
+  "Ginisang Itlog": {
+    "en": {
+      "ingredients": [
+        "eggs, beaten",
+        "tomatoes, onion, garlic",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and tomatoes until soft.",
+        "Pour in beaten eggs.",
+        "Scramble gently until just set, season with fish sauce, and serve immediately."
+      ]
+    }
+  },
+  "Scrambled Egg with Tomatoes": {
+    "en": {
+      "ingredients": [
+        "eggs, beaten",
+        "tomatoes, diced",
+        "onion, garlic",
+        "salt and pepper"
+      ],
+      "steps": [
+        "Saute garlic, onion and tomatoes until the tomatoes break down slightly.",
+        "Pour in beaten eggs.",
+        "Scramble gently until just set; season with salt and pepper."
+      ]
+    }
+  },
+  "Itlog na Maalat with Kamatis": {
+    "en": {
+      "ingredients": [
+        "salted duck eggs (itlog na maalat), sliced",
+        "fresh tomatoes, sliced",
+        "vinegar (optional dip)"
+      ],
+      "steps": [
+        "Boil the salted eggs if not already cooked, then cool and slice.",
+        "Arrange sliced tomatoes on a plate.",
+        "Top with the salted egg slices and serve simply, sometimes with a side of vinegar."
+      ]
+    }
+  },
+  "Sardinas with Egg": {
+    "en": {
+      "ingredients": [
+        "canned sardines in tomato sauce",
+        "eggs, beaten or fried",
+        "onion, garlic (optional)"
+      ],
+      "steps": [
+        "Saute the sardines briefly with garlic and onion if using.",
+        "Push to one side of the pan and scramble or fry the eggs alongside.",
+        "Combine or serve side by side with rice."
+      ]
+    }
+  },
+  "Sardinas with Misua": {
+    "en": {
+      "ingredients": [
+        "canned sardines in tomato sauce",
+        "misua noodles (thin wheat vermicelli)",
+        "garlic, onion",
+        "water or broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then add the sardines and their sauce.",
+        "Add water or broth and bring to a simmer.",
+        "Add misua noodles and cook briefly until tender (they cook very fast), then serve."
+      ]
+    }
+  },
+  "Corned Beef with Egg": {
+    "en": {
+      "ingredients": [
+        "canned corned beef",
+        "eggs, fried or scrambled",
+        "onion, garlic (optional)",
+        "potatoes, diced (optional)"
+      ],
+      "steps": [
+        "Saute garlic and onion (and potatoes if using), then add the corned beef and heat through.",
+        "Push to one side and fry or scramble eggs in the same pan.",
+        "Serve together with rice."
+      ]
+    }
+  },
+  "Hotdog with Egg": {
+    "en": {
+      "ingredients": [
+        "hotdogs, sliced",
+        "eggs, fried or scrambled",
+        "ketchup (optional)"
+      ],
+      "steps": [
+        "Pan-fry the sliced hotdogs until lightly browned.",
+        "Fry or scramble eggs alongside or separately.",
+        "Serve together with rice and ketchup if desired."
+      ]
+    }
+  },
+  "Tocino with Egg": {
+    "en": {
+      "ingredients": [
+        "pork tocino (see Pork Tocino)",
+        "eggs, fried",
+        "garlic rice to serve alongside"
+      ],
+      "steps": [
+        "Cook the tocino as described in its own recipe until caramelized.",
+        "Fry the eggs sunny-side up.",
+        "Serve together with garlic fried rice — a classic tosilog."
+      ]
+    }
+  },
+  "Longganisa with Egg": {
+    "en": {
+      "ingredients": [
+        "longganisa sausages (see Longganisa)",
+        "eggs, fried",
+        "garlic rice to serve alongside"
+      ],
+      "steps": [
+        "Pan-fry the longganisa until browned and cooked through.",
+        "Fry the eggs sunny-side up.",
+        "Serve together with garlic fried rice — a classic longsilog."
+      ]
+    }
+  },
+  "Tapa with Egg": {
+    "en": {
+      "ingredients": [
+        "beef tapa (see Beef Tapa)",
+        "eggs, fried",
+        "garlic rice to serve alongside"
+      ],
+      "steps": [
+        "Pan-fry the marinated beef tapa until browned.",
+        "Fry the eggs sunny-side up.",
+        "Serve together with garlic fried rice — a classic tapsilog."
+      ]
+    }
+  },
+  "Daing na Bangus with Egg": {
+    "en": {
+      "ingredients": [
+        "daing na bangus (see Daing na Bangus)",
+        "eggs, fried",
+        "garlic rice and tomatoes to serve alongside"
+      ],
+      "steps": [
+        "Fry the marinated bangus until crisp as in its own recipe.",
+        "Fry the eggs sunny-side up.",
+        "Serve together with garlic rice and sliced tomatoes — a classic daingsilog."
+      ]
+    }
+  },
+  "Pancit Canton": {
+    "en": {
+      "ingredients": [
+        "canton noodles (wheat noodles)",
+        "pork or chicken, sliced",
+        "cabbage, carrots, snap peas",
+        "garlic, onion, soy sauce",
+        "chicken broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the meat.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add the noodles and soy sauce, tossing until the noodles absorb the liquid and are tender."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "canton noodles (wheat noodles)",
+        "baboy o manok, hiniwa",
+        "repolyo, karot, snap peas",
+        "bawang, sibuyas, toyo",
+        "sabaw ng manok"
+      ],
+      "steps": [
+        "Igisa ang bawang at sibuyas, pagkatapos ay iprito ang karne hanggang mamula.",
+        "Idagdag ang sabaw at mga gulay, pakuluin nang saglit.",
+        "Idagdag ang noodles at toyo, haluin hanggang masipsip ng noodles ang sabaw at lumambot."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "canton noodles (wheat noodles)",
+        "baboy o manok, gitadtad",
+        "repolyo, karot, snap peas",
+        "ahos, sibuyas, toyo",
+        "sabaw sa manok"
+      ],
+      "steps": [
+        "I-guisa ang ahos ug sibuyas, dayon ipapula ang karne.",
+        "Idugang ang sabaw ug mga utanon, pabukala og gamay.",
+        "Idugang ang noodles ug toyo, sagola hangtod masuyop sa noodles ang sabaw ug molumo."
+      ]
+    }
+  },
+  "Pancit Bihon": {
+    "en": {
+      "ingredients": [
+        "bihon (rice noodles), soaked",
+        "pork or chicken, sliced",
+        "cabbage, carrots",
+        "garlic, onion, soy sauce",
+        "chicken broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the meat.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add the soaked bihon noodles and soy sauce, stir-frying until the noodles are tender and liquid is absorbed."
+      ]
+    }
+  },
+  "Pancit Palabok": {
+    "en": {
+      "ingredients": [
+        "rice noodles (palabok noodles)",
+        "shrimp broth-based orange sauce (annatto, shrimp cubes, flour)",
+        "shrimp, chicharon, boiled egg, green onions for topping",
+        "garlic, fish sauce"
+      ],
+      "steps": [
+        "Cook the rice noodles until tender, then drain.",
+        "Make the palabok sauce by simmering shrimp broth with annatto and thickening with flour or cornstarch.",
+        "Pour the sauce over the noodles and top generously with shrimp, chicharon, egg and green onions."
+      ]
+    }
+  },
+  "Pancit Malabon": {
+    "en": {
+      "ingredients": [
+        "thick rice noodles",
+        "seafood (shrimp, squid, oysters)",
+        "annatto-based sauce with shrimp broth",
+        "chicharon, boiled egg, green onions for topping"
+      ],
+      "steps": [
+        "Cook the thick rice noodles until tender.",
+        "Prepare a rich seafood-based orange sauce with annatto and thicken slightly.",
+        "Pour sauce over noodles and top with cooked seafood, chicharon, egg and green onions."
+      ]
+    }
+  },
+  "Pancit Luglug": {
+    "en": {
+      "ingredients": [
+        "thick rice noodles",
+        "shrimp-annatto sauce (similar to palabok)",
+        "chicharon, boiled egg, shrimp, green onions"
+      ],
+      "steps": [
+        "Cook thick rice noodles until tender.",
+        "Prepare the orange shrimp-annatto sauce and pour over the noodles.",
+        "Top with chicharon, shrimp, boiled egg and green onions before serving."
+      ]
+    }
+  },
+  "Pancit Batil Patung": {
+    "en": {
+      "ingredients": [
+        "miki noodles",
+        "ground beef patty and egg cooked together (batil-patung style)",
+        "beef broth",
+        "garlic, green onions"
+      ],
+      "steps": [
+        "Cook miki noodles and place in a bowl with hot beef broth.",
+        "Cook a beaten egg mixed with ground beef flat like a thin patty on a hot griddle.",
+        "Slice the beef-egg patty over the noodles, top with garlic and green onions, and serve."
+      ]
+    }
+  },
+  "Pancit Habhab": {
+    "en": {
+      "ingredients": [
+        "fresh rice noodles (sotanghon or fresh miki-like noodles)",
+        "pork, shrimp",
+        "garlic, onion, cabbage, carrots",
+        "soy sauce, calamansi"
+      ],
+      "steps": [
+        "Saute garlic, onion and pork/shrimp.",
+        "Add vegetables and noodles, tossing with soy sauce.",
+        "Traditionally served on a piece of banana leaf and eaten straight from it with a squeeze of calamansi."
+      ]
+    }
+  },
+  "Pancit Miki": {
+    "en": {
+      "ingredients": [
+        "fresh miki noodles (thick egg noodles)",
+        "pork or chicken, sliced",
+        "cabbage, carrots",
+        "garlic, onion, soy sauce",
+        "broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the meat.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add miki noodles and soy sauce, cooking until noodles are tender."
+      ]
+    }
+  },
+  "Pancit Sotanghon": {
+    "en": {
+      "ingredients": [
+        "sotanghon (glass noodles), soaked",
+        "chicken, shredded",
+        "wood ear mushrooms, cabbage, carrots",
+        "garlic, onion, fish sauce",
+        "chicken broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then add shredded chicken and vegetables.",
+        "Add broth and bring to a simmer.",
+        "Add the soaked sotanghon noodles, cooking until tender and the liquid is mostly absorbed."
+      ]
+    }
+  },
+  "Pancit Lomi": {
+    "en": {
+      "ingredients": [
+        "fresh thick lomi noodles",
+        "pork, shrimp or chicken",
+        "cabbage, carrots, quail eggs (optional)",
+        "garlic, onion, cornstarch slurry for a thick broth"
+      ],
+      "steps": [
+        "Saute garlic, onion and meat until cooked.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add lomi noodles and thicken the broth with cornstarch slurry until it reaches a thick, soupy consistency."
+      ]
+    }
+  },
+  "Kinalas": {
+    "en": {
+      "ingredients": [
+        "miki or egg noodles",
+        "beef or pork broth thickened with a flour-based gravy (kinalas sauce)",
+        "shredded beef or pork, hard-boiled egg, chicharon topping",
+        "garlic, green onions"
+      ],
+      "steps": [
+        "Cook noodles and place in a bowl.",
+        "Prepare a rich, dark broth thickened lightly with a flour gravy.",
+        "Pour broth over noodles, top with shredded meat, boiled egg, chicharon and green onions."
+      ]
+    }
+  },
+  "Miki-Bihon": {
+    "en": {
+      "ingredients": [
+        "a mix of miki (egg noodles) and bihon (rice noodles)",
+        "pork or chicken, sliced",
+        "cabbage, carrots",
+        "garlic, onion, soy sauce, broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the meat.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add both noodle types together with soy sauce, cooking until tender and well combined."
+      ]
+    }
+  },
+  "Bam-i": {
+    "en": {
+      "ingredients": [
+        "a mix of miki and bihon noodles",
+        "pork, chicken or shrimp",
+        "cabbage, carrots, garlic, onion",
+        "soy sauce, broth"
+      ],
+      "steps": [
+        "Saute garlic, onion and meat until cooked.",
+        "Add broth and vegetables, simmering briefly.",
+        "Add both noodle types and soy sauce, tossing until tender and well combined — a festive Visayan noodle dish."
+      ]
+    }
+  },
+  "Misua with Patola": {
+    "en": {
+      "ingredients": [
+        "misua (thin wheat noodles)",
+        "patola (sponge gourd/luffa), sliced",
+        "garlic, onion, ginger",
+        "shrimp or pork bits (optional)",
+        "fish sauce"
+      ],
+      "steps": [
+        "Saute garlic, onion and ginger, adding shrimp/pork if using.",
+        "Add patola and a little water or broth, simmering until softened.",
+        "Add misua noodles last and cook briefly, as they soften almost instantly."
+      ]
+    }
+  },
+  "Misua with Sardines": {
+    "en": {
+      "ingredients": [
+        "misua (thin wheat noodles)",
+        "canned sardines in tomato sauce",
+        "garlic, onion",
+        "water or broth"
+      ],
+      "steps": [
+        "Saute garlic and onion, then add the sardines and their sauce.",
+        "Add water or broth and bring to a simmer.",
+        "Add misua noodles and cook briefly until just tender, then serve hot."
+      ]
+    }
+  },
+  "Isaw Manok": {
+    "en": {
+      "ingredients": [
+        "chicken intestines, cleaned thoroughly and skewered",
+        "annatto oil or a soy-vinegar basting sauce"
+      ],
+      "steps": [
+        "Clean the intestines very thoroughly and parboil until tender.",
+        "Skewer and grill over charcoal, basting with annatto oil or a soy-vinegar mix.",
+        "Serve hot with a vinegar-chili dip, street-food style."
+      ]
+    }
+  },
+  "Isaw Baboy": {
+    "en": {
+      "ingredients": [
+        "pork intestines, cleaned thoroughly and skewered",
+        "annatto oil or a soy-vinegar basting sauce"
+      ],
+      "steps": [
+        "Clean the intestines thoroughly and parboil until tender.",
+        "Skewer and grill over charcoal, basting frequently.",
+        "Serve with a vinegar-chili dip."
+      ]
+    }
+  },
+  "Betamax": {
+    "en": {
+      "ingredients": [
+        "chicken or pork blood, cooked and cut into cubes, skewered",
+        "soy-vinegar basting sauce"
+      ],
+      "steps": [
+        "Cook and set the blood into firm cubes (if not already prepped), then skewer.",
+        "Grill briefly over charcoal, basting with a savory sauce.",
+        "Serve with a vinegar-chili dip, named for its resemblance to a videotape cassette."
+      ]
+    }
+  },
+  "Adidas": {
+    "en": {
+      "ingredients": [
+        "chicken feet, cleaned and skewered",
+        "annatto oil or a soy-vinegar basting sauce"
+      ],
+      "steps": [
+        "Clean and parboil the chicken feet until tender.",
+        "Skewer and grill over charcoal, basting occasionally.",
+        "Serve hot with a vinegar-chili dip."
+      ]
+    }
+  },
+  "Helmet": {
+    "en": {
+      "ingredients": [
+        "chicken heads, cleaned and skewered",
+        "annatto oil or soy-vinegar basting sauce"
+      ],
+      "steps": [
+        "Clean the chicken heads thoroughly and parboil until tender.",
+        "Skewer and grill over charcoal, basting frequently.",
+        "Serve with a vinegar-chili dip, a classic Pinoy street-food skewer."
+      ]
+    }
+  },
+  "Isdang Sinugba": {
+    "en": {
+      "ingredients": [
+        "whole fish",
+        "salt, pepper, calamansi marinade"
+      ],
+      "steps": [
+        "Marinate the fish briefly.",
+        "Grill over hot charcoal until charred and cooked through.",
+        "Serve with a vinegar-soy dip."
+      ]
+    }
+  },
+  "Sinugba nga Manok": {
+    "en": {
+      "ingredients": [
+        "chicken pieces",
+        "soy sauce, calamansi, garlic marinade"
+      ],
+      "steps": [
+        "Marinate the chicken for at least an hour.",
+        "Grill over charcoal, basting occasionally, until cooked through.",
+        "Serve with rice and a dipping sauce."
+      ]
+    }
+  },
+  "Sari-Saring Inihaw": {
+    "en": {
+      "ingredients": [
+        "an assortment of grilled items: pork belly, chicken, isaw, hotdog, squid",
+        "various marinades and basting sauces"
+      ],
+      "steps": [
+        "Marinate each protein separately according to its own recipe.",
+        "Grill everything over charcoal, managing different cooking times for each item.",
+        "Serve as a mixed grill platter with rice and assorted dips."
+      ]
+    }
+  },
+  "Lumpiang Shanghai": {
+    "en": {
+      "ingredients": [
+        "ground pork",
+        "carrots, onion, garlic, finely minced",
+        "lumpia wrapper",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Mix ground pork with finely minced vegetables and seasoning.",
+        "Roll thinly into small lumpia wrappers, sealing the edges.",
+        "Deep-fry until golden and crisp; serve with a sweet chili or banana ketchup dip."
+      ]
+    }
+  },
+  "Lumpiang Sariwa": {
+    "en": {
+      "ingredients": [
+        "fresh vegetables (carrots, cabbage, string beans, sayote), julienned",
+        "tofu, shrimp or pork",
+        "crepe-style lumpia wrapper (unfried)",
+        "peanut sauce for topping"
+      ],
+      "steps": [
+        "Saute the vegetables and protein together until just tender, then drain excess liquid.",
+        "Wrap in a soft, unfried crepe wrapper.",
+        "Serve fresh, topped with a sweet peanut sauce and crushed peanuts."
+      ]
+    }
+  },
+  "Lumpiang Togue": {
+    "en": {
+      "ingredients": [
+        "mung bean sprouts (togue)",
+        "carrots, tofu or pork (optional)",
+        "lumpia wrapper",
+        "cooking oil for frying (or served fresh)"
+      ],
+      "steps": [
+        "Saute the bean sprouts and other fillings briefly, draining excess liquid well.",
+        "Wrap in lumpia wrappers.",
+        "Fry until golden and crisp, or serve fresh with a dip."
+      ]
+    }
+  },
+  "Lumpiang Prito": {
+    "en": {
+      "ingredients": [
+        "ground pork or mixed vegetables",
+        "carrots, onion, garlic",
+        "lumpia wrapper",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Mix the filling of your choice with seasonings.",
+        "Roll into lumpia wrappers, sealing well.",
+        "Deep-fry until golden and crisp; serve with a dipping sauce."
+      ]
+    }
+  },
+  "Fried Bangus": {
+    "en": {
+      "ingredients": [
+        "milkfish (bangus), whole or sliced",
+        "salt and pepper, or marinated in vinegar-garlic",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Season or marinate the bangus briefly.",
+        "Fry in hot oil until golden and crisp on the outside.",
+        "Serve with rice and a vinegar-garlic dip."
+      ]
+    }
+  },
+  "Fried Galunggong": {
+    "en": {
+      "ingredients": [
+        "galunggong (mackerel scad), cleaned",
+        "salt and pepper marinade",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Season the fish with salt and pepper.",
+        "Fry in hot oil until golden and crisp.",
+        "Serve with rice, tomatoes and a vinegar dip."
+      ]
+    }
+  },
+  "Fried Tilapia": {
+    "en": {
+      "ingredients": [
+        "tilapia, cleaned and scored",
+        "salt and pepper marinade",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Season the tilapia with salt and pepper, scoring the sides for even cooking.",
+        "Fry in hot oil until crisp and golden on both sides.",
+        "Serve with rice and a vinegar-soy dip."
+      ]
+    }
+  },
+  "Chicharon": {
+    "en": {
+      "ingredients": [
+        "pork skin (with or without fat)",
+        "salt",
+        "cooking oil for deep frying"
+      ],
+      "steps": [
+        "Boil the pork skin until tender, then dry thoroughly (this step is key for crispiness).",
+        "Deep-fry at a lower temperature first to render, then again at high heat until it puffs and crisps.",
+        "Season with salt while still hot and serve as a snack or pulutan."
+      ]
+    }
+  },
+  "Tokwa't Baboy": {
+    "en": {
+      "ingredients": [
+        "fried tofu, cubed",
+        "boiled pork ear/belly, sliced",
+        "soy sauce, vinegar, garlic, chili dressing",
+        "onion, green onions"
+      ],
+      "steps": [
+        "Fry the tofu until golden and boil the pork until tender, then slice both.",
+        "Combine in a bowl.",
+        "Toss with a soy-vinegar-garlic-chili dressing and top with chopped onions before serving."
+      ]
+    }
+  },
+  "Dynamite Lumpia": {
+    "en": {
+      "ingredients": [
+        "long green chilies (siling pansigang), seeded",
+        "cheese or ground meat filling",
+        "lumpia wrapper",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Stuff the seeded chilies with cheese or a seasoned meat filling.",
+        "Wrap each in a lumpia wrapper.",
+        "Deep-fry until golden and crisp; serve as a spicy pulutan."
+      ]
+    }
+  },
+  "Sinugba": {
+    "en": {
+      "ingredients": [
+        "assorted meat or fish",
+        "salt, pepper, calamansi marinade"
+      ],
+      "steps": [
+        "Marinate the protein briefly.",
+        "Grill over hot charcoal until cooked through and lightly charred.",
+        "Serve with a vinegar-soy-chili dip, the general Visayan word for grilled food."
+      ]
+    }
+  },
+  "Linat-ang Isda": {
+    "en": {
+      "ingredients": [
+        "fish, whole or sliced",
+        "cabbage, potatoes or vegetables of choice",
+        "onion, ginger",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer fish with onion and ginger in water until nearly cooked.",
+        "Add vegetables and cook until tender.",
+        "Season with fish sauce and serve as a clear, comforting broth-based dish."
+      ]
+    }
+  },
+  "Linat-ang Baka": {
+    "en": {
+      "ingredients": [
+        "beef, cubed",
+        "cabbage, potatoes, corn",
+        "onion, ginger",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer beef slowly with onion and ginger until tender.",
+        "Add potatoes and corn, cooking until soft.",
+        "Add cabbage last, season with fish sauce, and serve — the Visayan nilaga."
+      ]
+    }
+  },
+  "Kinilaw": {
+    "en": {
+      "ingredients": [
+        "fresh fish or seafood, cubed",
+        "vinegar or calamansi juice",
+        "onion, ginger, chili",
+        "coconut milk (optional)",
+        "salt"
+      ],
+      "steps": [
+        "Cure the fish or seafood in vinegar or calamansi juice until the flesh turns opaque.",
+        "Toss with onion, ginger and chili, adding coconut milk for a creamier version.",
+        "Season with salt and serve chilled."
+      ]
+    }
+  },
+  "Sinuglaw": {
+    "en": {
+      "ingredients": [
+        "grilled pork belly, chopped",
+        "kinilaw-style raw fish cubes",
+        "vinegar, onion, ginger, chili",
+        "calamansi"
+      ],
+      "steps": [
+        "Grill the pork belly until charred, then chop into small pieces.",
+        "Cure the fish separately in vinegar, calamansi, onion, ginger and chili.",
+        "Combine the grilled pork and cured fish together just before serving — the name blends 'sinugba' and 'kinilaw'."
+      ]
+    }
+  },
+  "Tinunu-ang Isda": {
+    "en": {
+      "ingredients": [
+        "fish, grilled or smoked lightly",
+        "tomatoes, onion, ginger",
+        "vinegar or calamansi, salt"
+      ],
+      "steps": [
+        "Grill or lightly smoke the fish until cooked through.",
+        "Flake the fish and mix with chopped tomatoes, onion and ginger.",
+        "Dress with vinegar or calamansi and season with salt before serving."
+      ]
+    }
+  },
+  "Suam na Mais": {
+    "en": {
+      "ingredients": [
+        "fresh young corn, grated or kernels",
+        "chicken or shrimp",
+        "malunggay leaves",
+        "onion, ginger",
+        "fish sauce"
+      ],
+      "steps": [
+        "Simmer chicken or shrimp with onion and ginger to build a broth.",
+        "Add grated corn and simmer until it thickens slightly, porridge-like.",
+        "Add malunggay leaves, season with fish sauce, and serve warm."
+      ]
+    }
+  },
+  "Utan Bisaya": {
+    "en": {
+      "ingredients": [
+        "assorted native vegetables (squash, string beans, okra, eggplant)",
+        "fish or shrimp",
+        "ginger, onion",
+        "fish sauce or bagoong"
+      ],
+      "steps": [
+        "Build a light broth with ginger, onion and fish/shrimp.",
+        "Add the vegetables, starting with the firmest.",
+        "Season with fish sauce or bagoong and simmer briefly until tender-crisp — a humble everyday Visayan vegetable dish."
+      ]
+    }
+  },
+  "Ginamos": {
+    "en": {
+      "ingredients": [
+        "ginamos (Visayan fermented fish/shrimp paste)",
+        "tomatoes or eggplant, and rice, to serve alongside"
+      ],
+      "steps": [
+        "Ginamos is typically used as a ready-made condiment rather than cooked from scratch.",
+        "Serve a small amount alongside fried fish, grilled meat, or fresh vegetables.",
+        "Pair with rice as a salty, savory accent to a meal."
+      ]
+    }
+  },
+  "Tuslob-Buwa": {
+    "en": {
+      "ingredients": [
+        "pork brains and liver (or a bagoong-based version)",
+        "chicharon, puso (hanging rice) for dipping",
+        "onion, chili"
+      ],
+      "steps": [
+        "Cook the pork brains and liver mixture in a hot pan until it forms a thick, bubbling paste (traditionally on a sizzling plate, hence the name 'bubble-dip').",
+        "Season with onion and chili.",
+        "Dip pieces of chicharon or puso (rice wrapped in coconut leaves) directly into the hot mixture to eat, Cebu street-food style."
+      ]
+    }
+  },
+  "Puso ng Saging nga Ginat-an": {
+    "en": {
+      "ingredients": [
+        "banana blossom (puso ng saging), sliced",
+        "coconut milk",
+        "pork or shrimp (optional)",
+        "garlic, onion, ginger",
+        "chili"
+      ],
+      "steps": [
+        "Boil the banana blossom briefly to reduce bitterness, then drain.",
+        "Saute garlic, onion, ginger and pork/shrimp if using, then add the blossom and coconut milk.",
+        "Simmer until tender and the sauce thickens, then serve."
+      ]
+    }
+  },
+  "Ngohiong": {
+    "en": {
+      "ingredients": [
+        "ground pork mixed with singkamas (jicama) and five-spice powder",
+        "lumpia or ngohiong wrapper",
+        "cooking oil for frying"
+      ],
+      "steps": [
+        "Mix ground pork with shredded jicama and five-spice seasoning.",
+        "Roll into a wrapper, shaping into a long cylinder.",
+        "Deep-fry until golden and cooked through; slice and serve with a sweet-spiced vinegar dip, a Cebu Chinese-Filipino favorite."
+      ]
+    }
+  },
+  "Chorizo de Cebu": {
+    "en": {
+      "ingredients": [
+        "ground pork",
+        "garlic, sugar, vinegar",
+        "annatto or paprika for color",
+        "sausage casings"
+      ],
+      "steps": [
+        "Mix ground pork with garlic, sugar, vinegar and seasonings; stuff into casings.",
+        "Let cure in the fridge for a day to develop flavor.",
+        "Pan-fry with a little water first, letting it evaporate so the sausage browns and caramelizes, similar to longganisa but with its own distinct Cebuano seasoning."
+      ]
+    }
+  },
+  "Lechon Cebu": {
+    "en": {
+      "ingredients": [
+        "whole pig, cleaned",
+        "lemongrass, scallions, garlic, and a distinct blend of native herbs for stuffing",
+        "salt"
+      ],
+      "steps": [
+        "Stuff the pig cavity generously with lemongrass, scallions, garlic and native herbs (this is what gives Cebu lechon its distinct aroma without needing a dipping sauce).",
+        "Roast slowly on a spit over charcoal for several hours, turning continuously, until deeply golden and crackling.",
+        "Rest briefly, then chop and serve — famously flavorful enough to eat without sauce."
+      ]
+    }
+  },
+  "Adobo": {
+    "en": {
+      "ingredients": [
+        "pork and/or chicken, cut up",
+        "soy sauce, vinegar",
+        "garlic, bay leaf, peppercorns",
+        "sugar (optional)"
+      ],
+      "steps": [
+        "Combine meat, soy sauce, vinegar, garlic, bay leaf and pepper in a pot.",
+        "Simmer covered until the meat is tender, then uncover to reduce the sauce.",
+        "Optionally fry the meat in the reduced sauce for extra color and flavor before serving."
+      ]
+    },
+    "tl": {
+      "ingredients": [
+        "baboy at/o manok, hiniwa-hiwa",
+        "toyo, suka",
+        "bawang, laurel, paminta",
+        "asukal (optional)"
+      ],
+      "steps": [
+        "Pagsamahin ang karne, toyo, suka, bawang, laurel, at paminta sa kaldero.",
+        "Pakuluan nang natatakpan hanggang lumambot ang karne, pagkatapos ay buksan para paluparin ang sabaw.",
+        "Kung gusto, iprito ang karne sa pinalapot na sabaw para sa dagdag na kulay at lasa bago ihain."
+      ]
+    },
+    "bis": {
+      "ingredients": [
+        "baboy ug/o manok, gitasak-tasak",
+        "toyo, suka",
+        "ahos, laurel, paminta",
+        "asukar (optional)"
+      ],
+      "steps": [
+        "Isagol ang karne, toyo, suka, ahos, laurel, ug paminta sa kaldero.",
+        "Pabukala nga tinabonan hangtod molumo ang karne, dayon abrihi aron mopabo ang sabaw.",
+        "Kung gusto, iprito ang karne sa gipalabaw nga sabaw aron dugangan ang kolor ug lami una ihatag."
+      ]
+    }
+  },
+  "Embutido": {
+    "en": {
+      "ingredients": [
+        "ground pork",
+        "carrots, raisins, cheese, hotdog or ham for filling",
+        "eggs, breadcrumbs",
+        "aluminum foil or banana leaves for wrapping"
+      ],
+      "steps": [
+        "Mix ground pork with the fillings, egg and breadcrumbs.",
+        "Shape into logs and wrap tightly in foil or banana leaves.",
+        "Steam until firm and cooked through, then chill, slice, and optionally pan-fry the slices before serving."
+      ]
+    }
+  },
+  "Bopis": {
+    "en": {
+      "ingredients": [
+        "pork lungs and heart, minced",
+        "vinegar, soy sauce",
+        "garlic, onion, siling haba",
+        "carrots (optional)"
+      ],
+      "steps": [
+        "Boil the pork lungs and heart until tender, then mince finely.",
+        "Saute garlic, onion and chili, then add the minced offal.",
+        "Add vinegar and soy sauce, simmering until the flavors meld and the mixture is slightly dry."
+      ]
+    }
+  },
+  "Paksiw": {
+    "en": {
+      "ingredients": [
+        "fish or leftover lechon",
+        "vinegar, water",
+        "garlic, ginger",
+        "siling haba, salt"
+      ],
+      "steps": [
+        "Arrange garlic and ginger in the pot with the main protein.",
+        "Add vinegar, water and chili, bringing to a boil then simmering without excess stirring.",
+        "Cook until tender and the sauce reduces slightly, then serve."
+      ]
+    }
+  },
+  "Mechado": {
+    "en": {
+      "ingredients": [
+        "beef chunks, larded with pork fat strips (optional)",
+        "tomato sauce",
+        "potatoes, carrots",
+        "garlic, onion, bay leaf",
+        "soy sauce"
+      ],
+      "steps": [
+        "Saute garlic and onion, then brown the beef.",
+        "Add tomato sauce, soy sauce and bay leaf, simmering slowly until the beef is fork-tender.",
+        "Add potatoes and carrots, cooking until soft, then serve."
+      ]
+    }
+  },
+  "Morcon": {
+    "en": {
+      "ingredients": [
+        "beef flank, sliced thin and pounded",
+        "hotdog, carrot, pickle, cheese for filling",
+        "tomato sauce",
+        "garlic, onion, bay leaf"
+      ],
+      "steps": [
+        "Lay out the flattened beef and place the fillings in a line, then roll tightly and tie with kitchen twine.",
+        "Sear the roll, then braise in tomato sauce with garlic, onion and bay leaf until tender.",
+        "Cool slightly before slicing into rounds; serve with the sauce."
+      ]
+    }
+  }
+};
+
+/* ---------- Translations ---------- */
+const STRINGS = {
+  en: {
+    eyebrow: "Turo-Turo Random Order",
+    sub: "Press. Serve. Eat na.",
+    chipsLabel: "Choose a category (optional)",
+    allChip: "All",
+    serveBtn: "SERVE! 🔔",
+    historyLabel: "Order History",
+    historyHint: "Tap an order to view it again",
+    footnote: 'A homemade randomizer for that daily<br>"what\'s for ulam" question. 🍚',
+    placeholder: "No order yet.<br>Press SERVE! to get<br>a random dish.",
+    orderSlip: "Order Slip",
+    serveNow: "Serve now",
+    viewRecipe: "📋 View recipe",
+    ingredients: "Ingredients",
+    steps: "Steps",
+    close: "Close ✕",
+    recipeFallbackNote: "This recipe isn't translated yet — showing the English version.",
+    copyright: "© 2026 James Clerk Bojos. All rights reserved.",
+    recipeListLabel: "All Recipes",
+    recipeSearchPlaceholder: "Search dishes...",
+    recipeListEmpty: "No dishes match your search."
+  },
+  tl: {
+    eyebrow: "Turo-Turo Random Order",
+    sub: "Pindutin. Ihain. Kainan na.",
+    chipsLabel: "Piliin ang kategorya (opsyonal)",
+    allChip: "Lahat",
+    serveBtn: "IHAIN! 🔔",
+    historyLabel: "Nakaraang mga Order",
+    historyHint: "Pindutin ang order para tingnan muli",
+    footnote: 'Isang lutong-bahay randomizer para sa "ano ulam"<br>na tanong na \'yan araw-araw. 🍚',
+    placeholder: "Wala pang order.<br>Pindutin ang IHAIN! para makakuha<br>ng random na ulam.",
+    orderSlip: "Order Slip",
+    serveNow: "Ihain agad",
+    viewRecipe: "📋 Tingnan ang recipe",
+    ingredients: "Sangkap",
+    steps: "Paraan ng Pagluluto",
+    close: "Isara ✕",
+    recipeFallbackNote: "Hindi pa isinalin ang recipe na 'to — ipinapakita ang English version.",
+    copyright: "© 2026 James Clerk Bojos. Lahat ng karapatan ay nakalaan.",
+    recipeListLabel: "Listahan ng mga Recipe",
+    recipeSearchPlaceholder: "Maghanap ng ulam...",
+    recipeListEmpty: "Walang ulam na tugma sa hinahanap mo."
+  },
+  bis: {
+    eyebrow: "Turo-Turo Random Order",
+    sub: "Pislita. Iserbi. Kaon na.",
+    chipsLabel: "Pagpili ug kategorya (opsyonal)",
+    allChip: "Tanan",
+    serveBtn: "ISERBI! 🔔",
+    historyLabel: "Miaging mga Order",
+    historyHint: "Pislita ang order aron makita pag-usab",
+    footnote: 'Usa ka lutong-balay randomizer para sa "unsa\'y sud-an"<br>nga pangutana adlaw-adlaw. 🍚',
+    placeholder: "Wala pa'y order.<br>Pislita ang ISERBI! aron makakuha\'g<br>random nga sud-an.",
+    orderSlip: "Order Slip",
+    serveNow: "Iserbi dayon",
+    viewRecipe: "📋 Tan-awa ang resipe",
+    ingredients: "Sangkap",
+    steps: "Paagi sa Pagluto",
+    close: "Sirad-i ✕",
+    recipeFallbackNote: "Wala pa gihubad ni nga resipe — gipakita ang English version.",
+    copyright: "© 2026 James Clerk Bojos. Tanan nga katungod gitagana.",
+    recipeListLabel: "Listahan sa mga Resipe",
+    recipeSearchPlaceholder: "Pangitaa ang sud-an...",
+    recipeListEmpty: "Walay sud-an nga mutugma sa imong gipangita."
+  }
+};
+
+const CATEGORY_LABELS = {
+  "🍲 Soups & Sabaw":              { en: "Soups", tl: "Sabaw", bis: "Sabaw" },
+  "🐟 Fish & Seafood":             { en: "Fish & Seafood", tl: "Isda at Pagkaing-Dagat", bis: "Isda ug Pagkaon sa Dagat" },
+  "🍗 Chicken Dishes":             { en: "Chicken Dishes", tl: "Ulam na Manok", bis: "Sud-an nga Manok" },
+  "🐖 Pork Dishes":                { en: "Pork Dishes", tl: "Ulam na Baboy", bis: "Sud-an nga Baboy" },
+  "🥩 Beef Dishes":                { en: "Beef Dishes", tl: "Ulam na Baka", bis: "Sud-an nga Baka" },
+  "🥬 Vegetable Dishes":           { en: "Vegetable Dishes", tl: "Ulam na Gulay", bis: "Sud-an nga Utanon" },
+  "🥥 Ginataan / Coconut Milk":    { en: "Coconut Milk Dishes", tl: "Niluto sa Gata", bis: "Ginat-an" },
+  "🍳 Egg & Quick Ulam":           { en: "Egg & Quick Meals", tl: "Itlog at Mabilisang Ulam", bis: "Itlog ug Paspas nga Sud-an" },
+  "🍜 Noodles / Pancit":           { en: "Noodles", tl: "Pansit", bis: "Pansit" },
+  "🍢 Grilled & Street-Style":     { en: "Grilled & Street Food", tl: "Inihaw at Street Food", bis: "Sinugba ug Street Food" },
+  "🥟 Fried & Crispy":             { en: "Fried & Crispy", tl: "Prito at Malutong", bis: "Prito ug Malukpit" },
+  "🌴 Visayan / Bisaya":           { en: "Visayan Dishes", tl: "Ulam na Bisaya", bis: "Sud-an nga Bisaya" },
+  "🍚 Other Classic Pinoy Ulam":   { en: "Other Classic Filipino Dishes", tl: "Iba Pang Klasikong Pinoy Ulam", bis: "Uban Klasiko nga Pinoy Sud-an" }
+};
+
+const NOTES_BY_LANG = {
+  en: [
+    "Cook this one!","So worth it with rice.","Perfect with hot rice.",
+    "Extra rice, please.","Good any time of day.","Let's cook already!",
+    "Comfort food alert.","No skipping, cook that.","Getting hungry yet?",
+    "Special-occasion worthy, but fine for today too.","Simple but delicious."
+  ],
+  tl: [
+    "Lutuin mo 'to!","Sulit na sulit sa kanin.","Perfect sa mainit na kanin.",
+    "Extra rice, please.","Sarap kahit anong oras.","Tara, luto na tayo!",
+    "Comfort food alert.","Bawal umayaw, luto na 'yan.","Grabe, gutom na ba tayo?",
+    "Pang-special occasion pero pwede rin ngayon.","Simple lang pero masarap."
+  ],
+  bis: [
+    "Lutoa na ni!","Sulit kaayo sa kan-on.","Perfect sa init nga kan-on.",
+    "Extra bugas, palihug.","Lami bisan unsang oras.","Dali, magluto na ta!",
+    "Comfort food alert.","Ayaw pagdumili, lutoa na na.","Gigutom na ba ta?",
+    "Angay sa special occasion pero pwede pud karon.","Simple ra pero lami."
+  ]
+};
+
+let currentLang = 'tl';
+
+function t(key){ return STRINGS[currentLang][key]; }
+
+function categoryLabel(cat){ return CATEGORY_LABELS[cat] ? CATEGORY_LABELS[cat][currentLang] : cat.replace(/^\S+\s/, ''); }
+
+const categories = Object.keys(DATA);
+let activeCats = new Set(categories); // all active by default
+let history = [];
+let ticketCount = 0;
+
+const chipRow = document.getElementById('chipRow');
+const serveBtn = document.getElementById('serveBtn');
+const ticketStage = document.getElementById('ticketStage');
+const historyWrap = document.getElementById('historyWrap');
+const historyList = document.getElementById('historyList');
+const langSwitch = document.getElementById('langSwitch');
+const recipeListWrap = document.getElementById('recipeListWrap');
+const recipeSearch = document.getElementById('recipeSearch');
+let recipeSearchQuery = '';
+
+function renderRecipeList(){
+  const query = recipeSearchQuery.trim().toLowerCase();
+  recipeListWrap.innerHTML = '';
+  let anyMatch = false;
+
+  categories.forEach(cat => {
+    const dishes = DATA[cat].filter(d => !query || d.toLowerCase().includes(query));
+    if(dishes.length === 0) return;
+    anyMatch = true;
+
+    const catEl = document.createElement('p');
+    catEl.className = 'recipe-list-cat';
+    catEl.textContent = categoryLabel(cat);
+    recipeListWrap.appendChild(catEl);
+
+    const seen = new Set();
+    dishes.forEach(dish => {
+      if(seen.has(dish)) return; // dishes can appear in multiple categories
+      seen.add(dish);
+      const hasRecipe = Object.prototype.hasOwnProperty.call(RECIPES, dish);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'recipe-list-item' + (hasRecipe ? '' : ' no-recipe');
+      btn.textContent = dish;
+      if(hasRecipe){
+        btn.addEventListener('click', () => {
+          showRecipe(dish);
+          recipeWrap.scrollIntoView({behavior: reduceMotion() ? 'auto' : 'smooth', block:'center'});
+        });
+      } else {
+        btn.disabled = true;
+      }
+      recipeListWrap.appendChild(btn);
+    });
+  });
+
+  if(!anyMatch){
+    const empty = document.createElement('p');
+    empty.className = 'recipe-list-empty';
+    empty.textContent = t('recipeListEmpty');
+    recipeListWrap.appendChild(empty);
+  }
+}
+
+recipeSearch.addEventListener('input', () => {
+  recipeSearchQuery = recipeSearch.value;
+  renderRecipeList();
+});
+
+function renderChips(){
+  chipRow.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'chip active';
+  allBtn.type = 'button';
+  allBtn.id = 'chip-all';
+  allBtn.textContent = t('allChip');
+  allBtn.setAttribute('aria-pressed','true');
+  allBtn.addEventListener('click', () => {
+    activeCats = new Set(categories);
+    syncChipStates();
+  });
+  chipRow.appendChild(allBtn);
+
+  categories.forEach(cat => {
+    const label = categoryLabel(cat);
+    const btn = document.createElement('button');
+    btn.className = 'chip active';
+    btn.type = 'button';
+    btn.dataset.cat = cat;
+    btn.textContent = label;
+    btn.setAttribute('aria-pressed','true');
+    btn.addEventListener('click', () => {
+      if(activeCats.has(cat)){
+        activeCats.delete(cat);
+      } else {
+        activeCats.add(cat);
+      }
+      if(activeCats.size === 0){ activeCats = new Set(categories); }
+      syncChipStates();
+    });
+    chipRow.appendChild(btn);
+  });
+}
+
+function syncChipStates(){
+  const allActive = activeCats.size === categories.length;
+  document.getElementById('chip-all').classList.toggle('active', allActive);
+  document.getElementById('chip-all').setAttribute('aria-pressed', String(allActive));
+  chipRow.querySelectorAll('[data-cat]').forEach(btn => {
+    const isActive = activeCats.has(btn.dataset.cat);
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
+function pickDish(){
+  const pool = [];
+  activeCats.forEach(cat => {
+    DATA[cat].forEach(dish => pool.push({dish, cat}));
+  });
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function makeTicketData({dish, cat}){
+  ticketCount++;
+  const notes = NOTES_BY_LANG[currentLang];
+  return {
+    dish, cat,
+    num: String(ticketCount).padStart(3,'0'),
+    noteIndex: Math.floor(Math.random()*notes.length),
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+  };
+}
+
+function buildTicketEl(data){
+  const { dish, cat, num, noteIndex, time } = data;
+  const notes = NOTES_BY_LANG[currentLang];
+  const note = notes[noteIndex] || notes[0];
+  const catLabel = categoryLabel(cat);
+  const emoji = cat.split(' ')[0];
+  const hasRecipe = Object.prototype.hasOwnProperty.call(RECIPES, dish);
+
+  const el = document.createElement('div');
+  el.className = 'ticket';
+  el.innerHTML = `
+    <div class="tk-row"><span>${t('orderSlip')}</span><span>#${num}</span></div>
+    <div class="tk-cat">${emoji} ${catLabel}</div>
+    <div class="tk-dish">${dish}</div>
+    <hr class="tk-line">
+    <div class="tk-note">"${note}"</div>
+    <div class="tk-footer"><span>${time}</span><span>${t('serveNow')}</span></div>
+    ${hasRecipe ? `<button type="button" class="tk-recipe-btn" id="recipeBtn">${t('viewRecipe')}</button>` : ''}
+  `;
+  if(hasRecipe){
+    el.querySelector('#recipeBtn').addEventListener('click', () => showRecipe(dish));
+  }
+  return el;
+}
+
+const recipeWrap = document.getElementById('recipeWrap');
+
+function showRecipe(dish){
+  const recipe = RECIPES[dish];
+  if(!recipe){ recipeWrap.innerHTML = ''; return; }
+
+  const usingFallback = !recipe[currentLang] && currentLang !== 'en';
+  const langData = recipe[currentLang] || recipe.en;
+
+  const ingredientsHtml = langData.ingredients.map(i => `<li>${i}</li>`).join('');
+  const stepsHtml = langData.steps.map(s => `<li>${s}</li>`).join('');
+  const fallbackNoteHtml = usingFallback ? `<p class="recipe-fallback-note">${t('recipeFallbackNote')}</p>` : '';
+
+  recipeWrap.innerHTML = `
+    <div class="recipe-card">
+      <div class="recipe-head">
+        <h2>${dish}</h2>
+        <button type="button" class="recipe-close" id="recipeCloseBtn">${t('close')}</button>
+      </div>
+      ${fallbackNoteHtml}
+      <p class="recipe-section-title">${t('ingredients')}</p>
+      <ul class="recipe-ingredients">${ingredientsHtml}</ul>
+      <p class="recipe-section-title">${t('steps')}</p>
+      <ol class="recipe-steps">${stepsHtml}</ol>
+    </div>
+  `;
+  document.getElementById('recipeCloseBtn').addEventListener('click', () => {
+    recipeWrap.innerHTML = '';
+  });
+  recipeWrap.scrollIntoView({behavior: reduceMotion() ? 'auto' : 'smooth', block:'nearest'});
+}
+
+function reduceMotion(){
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+serveBtn.addEventListener('click', () => {
+  serveBtn.disabled = true;
+  const picked = pickDish();
+
+  if(reduceMotion()){
+    finishServe(picked);
+    return;
+  }
+
+  // brief rolling flicker before settling, like an order-board flipping
+  ticketStage.innerHTML = '';
+  const rolling = document.createElement('div');
+  rolling.className = 'rolling';
+  rolling.textContent = '...';
+  ticketStage.appendChild(rolling);
+
+  let ticks = 0;
+  const maxTicks = 9;
+  const interval = setInterval(() => {
+    const flash = pickDish();
+    rolling.textContent = flash.dish;
+    ticks++;
+    if(ticks >= maxTicks){
+      clearInterval(interval);
+      finishServe(picked);
+    }
+  }, 70);
+});
+
+function finishServe(picked){
+  const data = makeTicketData(picked);
+  showTicket(data);
+
+  history.unshift(data);
+  history = history.slice(0, 6);
+  renderHistory();
+}
+
+function showTicket(data){
+  ticketStage.innerHTML = '';
+  recipeWrap.innerHTML = '';
+  const ticketEl = buildTicketEl(data);
+  ticketStage.appendChild(ticketEl);
+  serveBtn.disabled = false;
+}
+
+function renderHistory(){
+  if(history.length === 0){
+    historyWrap.style.display = 'none';
+    return;
+  }
+  historyWrap.style.display = 'block';
+  historyList.innerHTML = '';
+  history.forEach((data) => {
+    const { dish, cat } = data;
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'history-item';
+    const catLabel = categoryLabel(cat);
+    btn.innerHTML = `<span class="dish">${dish}</span><span class="tag">${catLabel}</span>`;
+    btn.addEventListener('click', () => {
+      showTicket(data);
+      ticketStage.scrollIntoView({behavior: reduceMotion() ? 'auto' : 'smooth', block:'center'});
+    });
+    li.appendChild(btn);
+    historyList.appendChild(li);
+  });
+}
+
+/* ---------- Language switching ---------- */
+function applyLanguage(){
+  document.getElementById('eyebrowText').textContent = t('eyebrow');
+  document.getElementById('subText').textContent = t('sub');
+  document.getElementById('chips-label').textContent = t('chipsLabel');
+  document.getElementById('serveBtn').textContent = t('serveBtn');
+  document.getElementById('historyLabel').textContent = t('historyLabel');
+  document.getElementById('historyHint').textContent = t('historyHint');
+  document.getElementById('footnoteText').innerHTML = t('footnote');
+  document.getElementById('copyrightText').textContent = t('copyright');
+  document.getElementById('recipeListLabel').textContent = t('recipeListLabel');
+  recipeSearch.placeholder = t('recipeSearchPlaceholder');
+  const placeholderEl = document.getElementById('placeholderText');
+  if(placeholderEl){ placeholderEl.innerHTML = t('placeholder'); }
+
+  langSwitch.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    btn.setAttribute('aria-pressed', String(btn.dataset.lang === currentLang));
+  });
+
+  renderChips();
+  syncChipStates();
+  renderHistory();
+  renderRecipeList();
+
+  // if a ticket is currently on stage (not the placeholder), re-render it in the new language
+  if(history.length > 0 && !ticketStage.querySelector('.placeholder')){
+    showTicket(history[0]);
+  }
+  recipeWrap.innerHTML = '';
+}
+
+langSwitch.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.dataset.lang === currentLang) return;
+    currentLang = btn.dataset.lang;
+    applyLanguage();
+  });
+});
+
+applyLanguage();
+</script>
+</body>
+</html>
