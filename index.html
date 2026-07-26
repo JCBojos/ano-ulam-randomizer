@@ -376,17 +376,18 @@
     margin:0;
   }
   .recipe-close{
-    appearance:none;
-    border:none;
-    background:transparent;
-    color:#8a7a5f;
-    font-family:'Space Mono',monospace;
-    font-size:12px;
-    letter-spacing:0.05em;
-    cursor:pointer;
-    text-transform:uppercase;
-    padding:4px 6px;
-    flex-shrink:0;
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: #8a7a5f;
+    font-family: 'Space Mono',monospace;
+    font-size: 35px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    text-transform: uppercase;
+    padding: 0;
+    flex-shrink: 0;
+    line-height: 100%;
   }
   .recipe-close:hover{ color:var(--chili); }
   .recipe-close:focus-visible{ outline:2px solid var(--chili); }
@@ -4372,7 +4373,6 @@ const STRINGS = {
     viewRecipe: "📋 View recipe",
     ingredients: "Ingredients",
     steps: "Steps",
-    close: "Close ✕",
     recipeFallbackNote: "This recipe isn't translated yet — showing the English version.",
     copyright: "© 2026 James Clerk Bojos. All rights reserved.",
     recipeListLabel: "All Recipes",
@@ -4394,7 +4394,6 @@ const STRINGS = {
     viewRecipe: "📋 Tingnan ang recipe",
     ingredients: "Sangkap",
     steps: "Paraan ng Pagluluto",
-    close: "Isara ✕",
     recipeFallbackNote: "Hindi pa isinalin ang recipe na 'to — ipinapakita ang English version.",
     copyright: "© 2026 James Clerk Bojos. Lahat ng karapatan ay nakalaan.",
     recipeListLabel: "Listahan ng mga Recipe",
@@ -4416,7 +4415,6 @@ const STRINGS = {
     viewRecipe: "📋 Tan-awa ang resipe",
     ingredients: "Sangkap",
     steps: "Paagi sa Pagluto",
-    close: "Sirad-i ✕",
     recipeFallbackNote: "Wala pa gihubad ni nga resipe — gipakita ang English version.",
     copyright: "© 2026 James Clerk Bojos. Tanan nga katungod gitagana.",
     recipeListLabel: "Listahan sa mga Resipe",
@@ -4639,7 +4637,7 @@ function showRecipe(dish){
     <div class="recipe-card">
       <div class="recipe-head">
         <h2>${dish}</h2>
-        <button type="button" class="recipe-close" id="recipeCloseBtn">${t('close')}</button>
+        <button type="button" class="recipe-close" id="recipeCloseBtn">&times;</button>
       </div>
       ${fallbackNoteHtml}
       <p class="recipe-section-title">${t('ingredients')}</p>
