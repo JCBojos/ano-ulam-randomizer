@@ -131,6 +131,112 @@
     min-width:0;
   }
 
+  /* ---- Mobile: Recipe List becomes an off-canvas drawer ---- */
+  .recipe-drawer-header{
+    display:none;
+  }
+  .recipe-hamburger-btn{
+    display:none;
+  }
+  .drawer-overlay{
+    display:none;
+  }
+
+  @media (max-width: 899px){
+    .recipe-hamburger-btn{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:180;
+      appearance:none;
+      border:2px solid var(--gold-dim);
+      background:linear-gradient(180deg,#2a4530,#1b2e21);
+      color:var(--paper);
+      font-family:'Space Mono',monospace;
+      font-size:12px;
+      letter-spacing:0.06em;
+      padding:12px 16px;
+      border-radius:999px;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    }
+    .recipe-hamburger-btn:hover{ background:linear-gradient(180deg,#2f4e36,#203526); }
+    .recipe-hamburger-btn .ham-icon{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .recipe-hamburger-btn .ham-icon span{
+      display:block;
+      width:16px;
+      height:2px;
+      background:var(--gold);
+      border-radius:2px;
+    }
+
+    .drawer-overlay{
+      display:block;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease;
+      z-index:190;
+    }
+    .drawer-overlay.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .col-list{
+      position:fixed;
+      top:0;
+      right:0;
+      height:100dvh;
+      width:min(320px, 85vw);
+      background:linear-gradient(180deg,#1b2e21,#17271c);
+      border-left:2px solid var(--gold-dim);
+      padding:18px 16px 24px;
+      transform:translateX(100%);
+      transition:transform .3s ease;
+      z-index:200;
+      overflow-y:auto;
+      box-shadow:-10px 0 30px rgba(0,0,0,0.5);
+    }
+    .col-list.open{
+      transform:translateX(0);
+    }
+    .recipe-drawer-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .recipe-drawer-header .section-label{ margin:0; }
+    .col-list > .section-label{ display:none; }
+    .recipe-drawer-close{
+      appearance:none;
+      border:1px solid var(--chip-off-border);
+      background:var(--chip-off-bg);
+      color:var(--paper);
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      font-size:16px;
+      line-height:1;
+      cursor:pointer;
+    }
+    .recipe-drawer-close:hover{ background:rgba(251,246,231,0.15); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .col-list, .drawer-overlay{ transition:none; }
+  }
+
   .section-label{
     font-family:'Space Mono',monospace;
     font-size:11px;
@@ -833,7 +939,11 @@
     </div>
 
     <!-- RIGHT COLUMN: Recipe List & Search -->
-    <div class="col-list">
+    <div class="col-list" id="colList">
+      <div class="recipe-drawer-header">
+        <p class="section-label" id="recipeListLabelDrawer" style="margin:0;">Listahan ng mga Recipe</p>
+        <button type="button" class="recipe-drawer-close" id="recipeDrawerCloseBtn" aria-label="Close">&times;</button>
+      </div>
       <p class="section-label" id="recipeListLabel">Listahan ng mga Recipe</p>
       <div class="recipe-box">
         <input type="search" class="recipe-search" id="recipeSearch" placeholder="Search...">
@@ -842,6 +952,12 @@
     </div>
 
   </div>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <button type="button" class="recipe-hamburger-btn" id="recipeHamburgerBtn" aria-label="Open recipe list" aria-expanded="false" aria-controls="colList">
+    <span class="ham-icon"><span></span><span></span><span></span></span>
+    <span id="hamburgerLabel">Recipes</span>
+  </button>
 
   <div style="grid-column: 1 / -1; margin-top:24px;">
     <p class="footnote" id="footnoteText">Isang lutong-bahay randomizer para sa "ano ulam"<br>na tanong na 'yan araw-araw. 🍚</p>
@@ -977,7 +1093,8 @@ const STRINGS = {
     recipeSearchPlaceholder: "Search dishes...",
     recipeListEmpty: "No dishes match your search.",
     watchYoutube: "Watch on YouTube",
-    langSwitchLabel: "Language"
+    langSwitchLabel: "Language",
+    recipesButton: "Recipes"
   },
   tl: {
     eyebrow: "Turo-Turo Random Order",
@@ -1002,7 +1119,8 @@ const STRINGS = {
     recipeSearchPlaceholder: "Maghanap ng ulam...",
     recipeListEmpty: "Walang ulam na tugma sa hinahanap mo.",
     watchYoutube: "Panoorin sa YouTube",
-    langSwitchLabel: "Wika"
+    langSwitchLabel: "Wika",
+    recipesButton: "Recipes"
   },
   bis: {
     eyebrow: "Turo-Turo Random Order",
@@ -1027,7 +1145,8 @@ const STRINGS = {
     recipeSearchPlaceholder: "Pangitaa ang sud-an...",
     recipeListEmpty: "Walay sud-an nga mutugma sa imong gipangita.",
     watchYoutube: "Tan-awa sa YouTube",
-    langSwitchLabel: "Pinulongan"
+    langSwitchLabel: "Pinulongan",
+    recipesButton: "Recipes"
   }
 };
 
@@ -1330,6 +1449,83 @@ function reduceMotion(){
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+// ---- Sound FX (Web Audio API, no external files needed) ----
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+// Bell-like "ding" for when the ticket is served
+function playDingSound(){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.5, now + 0.012);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+  master.connect(ctx.destination);
+
+  [1568, 2093, 3136].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.value = i === 0 ? 1 : 0.35;
+    osc.connect(g);
+    g.connect(master);
+    osc.start(now);
+    osc.stop(now + 1.15);
+  });
+}
+
+// Short click/tick for the roulette wheel
+function playTickSound(){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.value = 900;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.18, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+  osc.connect(g);
+  g.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.05);
+}
+
+// Plays a decelerating sequence of ticks to match the wheel slowing down
+function playSpinTicks(durationMs){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const totalTicks = 26;
+  let tickIndex = 0;
+
+  function scheduleNext(){
+    if(tickIndex >= totalTicks) return;
+    const progress = tickIndex / totalTicks;
+    const delay = 40 + Math.pow(progress, 2) * (durationMs / totalTicks) * 3.2;
+    setTimeout(() => {
+      playTickSound();
+      tickIndex++;
+      scheduleNext();
+    }, delay);
+  }
+  scheduleNext();
+}
+
 // Spin Wheel Action
 serveBtn.addEventListener('click', () => {
   serveBtn.disabled = true;
@@ -1343,6 +1539,7 @@ serveBtn.addEventListener('click', () => {
   }
 
   if(reduceMotion()){
+    playDingSound();
     finishServe(picked);
     return;
   }
@@ -1365,7 +1562,10 @@ serveBtn.addEventListener('click', () => {
   canvas.style.transition = 'transform 3s cubic-bezier(0.15, 0.85, 0.25, 1)';
   canvas.style.transform = `rotate(${currentRotation}deg)`;
 
+  playSpinTicks(3000);
+
   setTimeout(() => {
+    playDingSound();
     finishServe(picked);
   }, 3100);
 });
@@ -1425,6 +1625,9 @@ function applyLanguage(){
   document.getElementById('footnoteText').innerHTML = t('footnote');
   document.getElementById('copyrightText').textContent = t('copyright');
   document.getElementById('recipeListLabel').textContent = t('recipeListLabel');
+  document.getElementById('recipeListLabelDrawer').textContent = t('recipeListLabel');
+  document.getElementById('hamburgerLabel').textContent = t('recipesButton');
+  recipeHamburgerBtn.setAttribute('aria-label', t('recipesButton'));
   recipeSearch.placeholder = t('recipeSearchPlaceholder');
   const placeholderEl = document.getElementById('placeholderText');
   if(placeholderEl){ placeholderEl.innerHTML = t('placeholder'); }
@@ -1458,6 +1661,40 @@ langSwitch.querySelectorAll('.lang-btn').forEach(btn => {
     currentLang = btn.dataset.lang;
     applyLanguage();
   });
+});
+
+// ---- Mobile recipe list drawer (hamburger toggle) ----
+function openRecipeDrawer(){
+  colList.classList.add('open');
+  drawerOverlay.classList.add('open');
+  recipeHamburgerBtn.setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = 'hidden';
+}
+function closeRecipeDrawer(){
+  colList.classList.remove('open');
+  drawerOverlay.classList.remove('open');
+  recipeHamburgerBtn.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+recipeHamburgerBtn.addEventListener('click', () => {
+  if(colList.classList.contains('open')){
+    closeRecipeDrawer();
+  } else {
+    openRecipeDrawer();
+  }
+});
+recipeDrawerCloseBtn.addEventListener('click', closeRecipeDrawer);
+drawerOverlay.addEventListener('click', closeRecipeDrawer);
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && colList.classList.contains('open')){
+    closeRecipeDrawer();
+  }
+});
+// Close drawer automatically when a recipe is picked from the list (mobile)
+recipeListWrap.addEventListener('click', (e) => {
+  if(e.target.closest('.recipe-list-item') && window.matchMedia('(max-width: 899px)').matches){
+    closeRecipeDrawer();
+  }
 });
 
 applyLanguage();
