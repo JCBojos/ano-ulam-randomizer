@@ -891,7 +891,7 @@ const STRINGS = {
     filtersLabel: "Kategorya",
     selectAll: "Piliin Lahat",
     clearAll: "Alisin Lahat",
-    rouletteLabel: "Roulette Wheel",
+    rouletteLabel: "Gulong ng Kapalaran",
     serveBtn: "IHAIN! 🔔",
     historyLabel: "Nakaraang mga Order",
     historyHint: "Pindutin ang order para tingnan muli",
@@ -914,7 +914,7 @@ const STRINGS = {
     filtersLabel: "Mga Kategorya",
     selectAll: "Pilia Tanan",
     clearAll: "Haw-asa",
-    rouletteLabel: "Roulette Wheel",
+    rouletteLabel: "Ligid sa Kapalaran",
     serveBtn: "ISERBI! 🔔",
     historyLabel: "Miaging mga Order",
     historyHint: "Pislita ang order aron makita pag-usab",
@@ -965,6 +965,7 @@ let history = [];
 let ticketCount = 0;
 let currentRotation = 0;
 let wheelWedges = [];
+let recipeSearchQuery = '';
 
 // Render Category Checkboxes on Left Side
 function renderCategoryCheckboxes(){
