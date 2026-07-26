@@ -865,6 +865,69 @@
     color:#8a7a5f;
     padding:10px 4px;
   }
+
+  /* ---- Suggestion / feedback box ---- */
+  .suggest-box{
+    background:rgba(23,39,28,0.7);
+    border:1.5px solid var(--chip-off-border);
+    border-radius:10px;
+    padding:16px;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.3);
+    margin-top:24px;
+  }
+  .suggest-hint{
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    color:#5f7864;
+    margin:-6px 0 12px 4px;
+    line-height:1.5;
+  }
+  .suggest-field{
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:9px 12px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:1.5px solid var(--chip-off-border);
+    background:var(--chip-off-bg);
+    color:var(--paper);
+    resize:vertical;
+  }
+  .suggest-field::placeholder{ color:#9aab9d; }
+  .suggest-field:focus-visible{ outline:2px solid #e9c877; outline-offset:1px; }
+  textarea.suggest-field{ min-height:64px; }
+  .suggest-submit-btn{
+    appearance:none;
+    width:100%;
+    padding:11px 14px;
+    border-radius:8px;
+    border:1.5px solid var(--gold-dim);
+    background:linear-gradient(180deg,#d9531a,var(--annatto-dark));
+    color:#fff8ec;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition: filter .15s ease, transform .1s ease;
+  }
+  .suggest-submit-btn:hover{ filter:brightness(1.08); }
+  .suggest-submit-btn:active{ transform:scale(0.98); }
+  .suggest-submit-btn:disabled{ opacity:0.6; cursor:default; }
+  .suggest-submit-btn:focus-visible{ outline:2px solid var(--chili); outline-offset:2px; }
+  .suggest-status{
+    font-family:'Space Mono',monospace;
+    font-size:11.5px;
+    margin-top:10px;
+    min-height:1.4em;
+    line-height:1.5;
+  }
+  .suggest-status.ok{ color:#8fd19e; }
+  .suggest-status.err{ color:#e28a8a; }
 </style>
 </head>
 <body>
@@ -935,6 +998,17 @@
         <p class="section-label" id="historyLabel">Nakaraang mga order</p>
         <p class="history-hint" id="historyHint">Pindutin ang order para tingnan muli</p>
         <ul id="historyList"></ul>
+      </div>
+
+      <div class="suggest-box">
+        <p class="section-label" id="suggestLabel">Magmungkahi ng Ulam</p>
+        <p class="suggest-hint" id="suggestHint">Ibahagi ang iyong mungkahi — makikita ito ng ibang gumagamit.</p>
+        <form id="suggestForm">
+          <input type="text" class="suggest-field" id="suggestName" placeholder="Pangalan mo (opsyonal)..." maxlength="80">
+          <textarea class="suggest-field" id="suggestNote" placeholder="Mungkahi o komento..." maxlength="500" required></textarea>
+          <button type="submit" class="suggest-submit-btn" id="suggestSubmitBtn">Ipadala</button>
+          <p class="suggest-status" id="suggestStatus"></p>
+        </form>
       </div>
 
     </div>
@@ -1095,7 +1169,16 @@ const STRINGS = {
     recipeListEmpty: "No dishes match your search.",
     watchYoutube: "Watch on YouTube",
     langSwitchLabel: "Language",
-    recipesButton: "Recipes"
+    recipesButton: "Recipes",
+    suggestLabel: "Suggestions & Feedback",
+    suggestHint: "Your message goes straight to the owner's inbox.",
+    suggestNamePlaceholder: "Your name (optional)...",
+    suggestNotePlaceholder: "Your suggestion or comment...",
+    suggestSubmit: "Send via Email",
+    suggestSending: "Opening email app...",
+    suggestOk: "Thanks! Your message was sent.",
+    suggestErr: "Something went wrong. Please try again.",
+    suggestNeedComment: "Please write your suggestion or comment."
   },
   tl: {
     eyebrow: "Turo-Turo Random Order",
@@ -1121,7 +1204,16 @@ const STRINGS = {
     recipeListEmpty: "Walang ulam na tugma sa hinahanap mo.",
     watchYoutube: "Panoorin sa YouTube",
     langSwitchLabel: "Wika",
-    recipesButton: "Recipes"
+    recipesButton: "Recipes",
+    suggestLabel: "Mungkahi at Feedback",
+    suggestHint: "Direktang mapupunta ang iyong mensahe sa inbox ng may-ari.",
+    suggestNamePlaceholder: "Pangalan mo (opsyonal)...",
+    suggestNotePlaceholder: "Mungkahi o komento mo...",
+    suggestSubmit: "Ipadala sa Email",
+    suggestSending: "Binubuksan ang email app...",
+    suggestOk: "Salamat! Naipadala na ang iyong mensahe.",
+    suggestErr: "May nangyaring mali. Subukan ulit.",
+    suggestNeedComment: "Paki-sulat ang iyong mungkahi o komento."
   },
   bis: {
     eyebrow: "Turo-Turo Random Order",
@@ -1147,7 +1239,16 @@ const STRINGS = {
     recipeListEmpty: "Walay sud-an nga mutugma sa imong gipangita.",
     watchYoutube: "Tan-awa sa YouTube",
     langSwitchLabel: "Pinulongan",
-    recipesButton: "Recipes"
+    recipesButton: "Recipes",
+    suggestLabel: "Sugyot ug Feedback",
+    suggestHint: "Direkta nga mahatod ang imong mensahe sa inbox sa tag-iya.",
+    suggestNamePlaceholder: "Ngalan nimo (opsyonal)...",
+    suggestNotePlaceholder: "Sugyot o komento nimo...",
+    suggestSubmit: "Ipadala sa Email",
+    suggestSending: "Gina-abli ang email app...",
+    suggestOk: "Salamat! Naipadala na ang imong mensahe.",
+    suggestErr: "Naa'y sayop. Palihug sulayi og balik.",
+    suggestNeedComment: "Palihug isulat ang imong sugyot o komento."
   }
 };
 
@@ -1612,6 +1713,61 @@ function renderHistory(){
   });
 }
 
+// ---- Suggestion / feedback form ----
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqergoop';
+
+const suggestForm = document.getElementById('suggestForm');
+const suggestName = document.getElementById('suggestName');
+const suggestNote = document.getElementById('suggestNote');
+const suggestSubmitBtn = document.getElementById('suggestSubmitBtn');
+const suggestStatus = document.getElementById('suggestStatus');
+
+function setSuggestStatus(msg, kind){
+  suggestStatus.textContent = msg || '';
+  suggestStatus.className = 'suggest-status' + (kind ? (' ' + kind) : '');
+}
+
+suggestForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nameVal = suggestName.value.trim();
+  const noteVal = suggestNote.value.trim();
+
+  if(!noteVal){
+    setSuggestStatus(t('suggestNeedComment'), 'err');
+    return;
+  }
+
+  suggestSubmitBtn.disabled = true;
+  const originalLabel = suggestSubmitBtn.textContent;
+  suggestSubmitBtn.textContent = t('suggestSending');
+  setSuggestStatus('', '');
+
+  try {
+    const response = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: new URLSearchParams({
+        name: nameVal || '(not provided)',
+        message: noteVal,
+        _subject: 'Ano Ulam? — Suggestion' + (nameVal ? ' from ' + nameVal : '')
+      })
+    });
+
+    if(!response.ok){
+      throw new Error('Formspree responded with status ' + response.status);
+    }
+
+    setSuggestStatus(t('suggestOk'), 'ok');
+    suggestForm.reset();
+  } catch(err){
+    console.error('Suggestion submit error:', err);
+    setSuggestStatus(t('suggestErr'), 'err');
+  } finally {
+    suggestSubmitBtn.disabled = false;
+    suggestSubmitBtn.textContent = originalLabel;
+  }
+});
+
 // Language application
 function applyLanguage(){
   document.getElementById('eyebrowText').textContent = t('eyebrow');
@@ -1632,6 +1788,13 @@ function applyLanguage(){
   recipeSearch.placeholder = t('recipeSearchPlaceholder');
   const placeholderEl = document.getElementById('placeholderText');
   if(placeholderEl){ placeholderEl.innerHTML = t('placeholder'); }
+
+  document.getElementById('suggestLabel').textContent = t('suggestLabel');
+  document.getElementById('suggestHint').textContent = t('suggestHint');
+  suggestName.placeholder = t('suggestNamePlaceholder');
+  suggestNote.placeholder = t('suggestNotePlaceholder');
+  suggestSubmitBtn.textContent = t('suggestSubmit');
+  setSuggestStatus('', '');
 
   const langOrder = ['en', 'tl', 'bis'];
   langSwitch.querySelectorAll('.lang-btn').forEach(btn => {
